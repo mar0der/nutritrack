@@ -1,0 +1,84 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Ingredient {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  category    String
+  nutritionalInfo Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  dishIngredients DishIngredient[]
+  consumptionLogs ConsumptionLog[]
+  
+  @@map("ingredients")
+}
+
+model Dish {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  instructions String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  dishIngredients DishIngredient[]
+  consumptionLogs ConsumptionLog[]
+  
+  @@map("dishes")
+}
+
+model DishIngredient {
+  id           String @id @default(cuid())
+  dishId       String
+  ingredientId String
+  quantity     Float
+  unit         String
+  
+  // Relations
+  dish       Dish       @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  
+  @@unique([dishId, ingredientId])
+  @@map("dish_ingredients")
+}
+
+model ConsumptionLog {
+  id           String    @id @default(cuid())
+  ingredientId String?
+  dishId       String?
+  quantity     Float
+  unit         String?
+  consumedAt   DateTime  @default(now())
+  
+  // Relations
+  ingredient Ingredient? @relation(fields: [ingredientId], references: [id], onDelete: SetNull)
+  dish       Dish?       @relation(fields: [dishId], references: [id], onDelete: SetNull)
+  
+  @@map("consumption_logs")
+}
+
+model UserPreference {
+  id                    String @id @default(cuid())
+  avoidPeriodDays       Int    @default(7)
+  dietaryRestrictions   String[]
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  
+  @@map("user_preferences")
+}
