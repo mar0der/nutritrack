@@ -1,3 +1,6 @@
+[phases.setup]
+nixPkgs = ["nodejs", "npm"]
+
 [phases.build]
 cmds = [
   "cd backend",

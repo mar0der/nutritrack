@@ -49,3 +49,6 @@ vite.config.ts.timestamp-*
 # Temporary files
 *.tmp
 *.temp
+
+# Deployment (manual transfer to server)
+deployment/

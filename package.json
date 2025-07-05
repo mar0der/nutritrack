@@ -1,0 +1,17 @@
+{
+  "name": "nutritrack",
+  "version": "1.0.0",
+  "description": "Nutrition tracking application",
+  "main": "backend/dist/server.js",
+  "scripts": {
+    "build": "cd backend && npm ci && npx prisma generate && npm run build",
+    "start": "cd backend && npx prisma migrate deploy && npm start",
+    "dev": "cd backend && npm run dev"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": ["nutrition", "tracking", "health"],
+  "author": "",
+  "license": "ISC"
+}
