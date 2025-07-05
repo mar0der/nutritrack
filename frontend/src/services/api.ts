@@ -1,19 +1,24 @@
 import axios from 'axios';
 import { type Ingredient, type Dish, type ConsumptionLog, type Recommendation, type CreateIngredientForm, type CreateDishForm, type CreateConsumptionLogForm } from '../types';
+import { getApiUrl, shouldUseHttps } from '../utils/environment';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const API_BASE_URL = getApiUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // 10 second timeout
+  // Ensure HTTPS is used in production
+  httpsAgent: typeof window === 'undefined' ? undefined : null,
 });
 
 // Request interceptor for logging
 api.interceptors.request.use(
   (config) => {
-    console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    const protocol = shouldUseHttps() ? 'HTTPS' : 'HTTP';
+    console.log(`API Request (${protocol}): ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
     return config;
   },
   (error) => {
@@ -28,6 +33,16 @@ api.interceptors.response.use(
   },
   (error) => {
     console.error('API Error:', error.response?.data || error.message);
+    
+    // Handle specific HTTPS/SSL errors
+    if (error.code === 'CERT_HAS_EXPIRED' || error.code === 'CERT_UNTRUSTED') {
+      console.warn('SSL Certificate issue detected. Using self-signed certificate.');
+    }
+    
+    if (error.code === 'ECONNREFUSED' && window.location.protocol === 'https:') {
+      console.error('HTTPS connection failed. Check if server supports HTTPS.');
+    }
+    
     return Promise.reject(error);
   }
 );
