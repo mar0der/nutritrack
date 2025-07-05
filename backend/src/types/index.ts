@@ -37,7 +37,7 @@ export const CreateConsumptionLogSchema = z.object({
   dishId: z.string().optional(),
   quantity: z.number().positive(),
   unit: z.string().optional(),
-  consumedAt: z.string().datetime().optional(),
+  consumedAt: z.string().optional(),
 }).refine(
   (data) => data.ingredientId || data.dishId,
   'Either ingredientId or dishId must be provided'

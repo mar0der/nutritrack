@@ -1,15 +1,86 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { consumptionApi } from '../services/api';
-import { PlusIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { consumptionApi, ingredientsApi, dishesApi } from '../services/api';
+import { PlusIcon, CalendarDaysIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 export default function ConsumptionPage() {
   const [days, setDays] = useState(30);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [logType, setLogType] = useState<'ingredient' | 'dish'>('ingredient');
+  const [formData, setFormData] = useState({
+    ingredientId: '',
+    dishId: '',
+    quantity: 1,
+    unit: 'g',
+    consumedAt: new Date().toISOString().slice(0, 16)
+  });
+  
+  const queryClient = useQueryClient();
 
   const { data: consumptionLogs, isLoading, error } = useQuery({
     queryKey: ['consumption', { days }],
     queryFn: () => consumptionApi.getAll({ days }).then(res => res.data),
   });
+
+  const { data: ingredients } = useQuery({
+    queryKey: ['ingredients'],
+    queryFn: () => ingredientsApi.getAll().then(res => res.data),
+  });
+
+  const { data: dishes } = useQuery({
+    queryKey: ['dishes'],
+    queryFn: () => dishesApi.getAll().then(res => res.data),
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (data: any) => consumptionApi.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['consumption'] });
+      setIsModalOpen(false);
+      setFormData({
+        ingredientId: '',
+        dishId: '',
+        quantity: 1,
+        unit: 'g',
+        consumedAt: new Date().toISOString().slice(0, 16)
+      });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validation
+    if (logType === 'ingredient' && !formData.ingredientId) {
+      alert('Please select an ingredient');
+      return;
+    }
+    
+    if (logType === 'dish' && !formData.dishId) {
+      alert('Please select a dish');
+      return;
+    }
+    
+    if (formData.quantity <= 0) {
+      alert('Please enter a valid quantity');
+      return;
+    }
+    
+    const logData: any = {
+      quantity: formData.quantity,
+      unit: formData.unit,
+      consumedAt: formData.consumedAt
+    };
+    
+    if (logType === 'ingredient') {
+      logData.ingredientId = formData.ingredientId;
+    } else {
+      logData.dishId = formData.dishId;
+    }
+    
+    console.log('Submitting consumption log:', logData);
+    createMutation.mutate(logData);
+  };
 
   if (isLoading) {
     return (
@@ -43,6 +114,7 @@ export default function ConsumptionPage() {
         <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
           <button
             type="button"
+            onClick={() => setIsModalOpen(true)}
             className="inline-flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
             <PlusIcon className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
@@ -148,6 +220,175 @@ export default function ConsumptionPage() {
           <p className="mt-1 text-sm text-gray-500">
             Start tracking your nutrition by logging what you eat.
           </p>
+        </div>
+      )}
+
+      {/* Log Consumption Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setIsModalOpen(false)}></div>
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <form onSubmit={handleSubmit}>
+                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                  <div className="sm:flex sm:items-start">
+                    <div className="w-full">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-medium text-gray-900">
+                          Log Consumption
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() => setIsModalOpen(false)}
+                          className="text-gray-400 hover:text-gray-600"
+                        >
+                          <XMarkIcon className="h-6 w-6" />
+                        </button>
+                      </div>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            What did you consume?
+                          </label>
+                          <div className="flex space-x-4">
+                            <label className="inline-flex items-center">
+                              <input
+                                type="radio"
+                                className="form-radio text-blue-600"
+                                name="logType"
+                                value="ingredient"
+                                checked={logType === 'ingredient'}
+                                onChange={(e) => setLogType(e.target.value as 'ingredient' | 'dish')}
+                              />
+                              <span className="ml-2">Ingredient</span>
+                            </label>
+                            <label className="inline-flex items-center">
+                              <input
+                                type="radio"
+                                className="form-radio text-blue-600"
+                                name="logType"
+                                value="dish"
+                                checked={logType === 'dish'}
+                                onChange={(e) => setLogType(e.target.value as 'ingredient' | 'dish')}
+                              />
+                              <span className="ml-2">Dish</span>
+                            </label>
+                          </div>
+                        </div>
+                        
+                        {logType === 'ingredient' ? (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Ingredient
+                            </label>
+                            <select
+                              required
+                              value={formData.ingredientId}
+                              onChange={(e) => setFormData({ ...formData, ingredientId: e.target.value })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                              <option value="">Select an ingredient</option>
+                              {ingredients?.map((ingredient) => (
+                                <option key={ingredient.id} value={ingredient.id}>
+                                  {ingredient.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        ) : (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Dish
+                            </label>
+                            <select
+                              required
+                              value={formData.dishId}
+                              onChange={(e) => setFormData({ ...formData, dishId: e.target.value })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                              <option value="">Select a dish</option>
+                              {dishes?.map((dish) => (
+                                <option key={dish.id} value={dish.id}>
+                                  {dish.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+                        
+                        <div className="flex space-x-3">
+                          <div className="flex-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Quantity
+                            </label>
+                            <input
+                              type="number"
+                              required
+                              min="0"
+                              step="0.1"
+                              value={formData.quantity}
+                              onChange={(e) => setFormData({ ...formData, quantity: parseFloat(e.target.value) || 0 })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="Enter quantity"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Unit
+                            </label>
+                            <select
+                              value={formData.unit}
+                              onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                              <option value="g">g</option>
+                              <option value="kg">kg</option>
+                              <option value="ml">ml</option>
+                              <option value="l">l</option>
+                              <option value="pieces">pieces</option>
+                              <option value="cups">cups</option>
+                              <option value="tbsp">tbsp</option>
+                              <option value="tsp">tsp</option>
+                              <option value="serving">serving</option>
+                              <option value="portion">portion</option>
+                            </select>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            When did you consume this?
+                          </label>
+                          <input
+                            type="datetime-local"
+                            value={formData.consumedAt}
+                            onChange={(e) => setFormData({ ...formData, consumedAt: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                  <button
+                    type="submit"
+                    disabled={createMutation.isPending}
+                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+                  >
+                    {createMutation.isPending ? 'Logging...' : 'Log Consumption'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         </div>
       )}
     </div>

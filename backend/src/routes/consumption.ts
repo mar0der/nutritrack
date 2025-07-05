@@ -44,14 +44,16 @@ router.get('/', async (req: any, res: any) => {
 // POST /api/consumption - Log consumption
 router.post('/', async (req: any, res: any) => {
   try {
+    console.log('Received consumption log request:', req.body);
     const validatedData = CreateConsumptionLogSchema.parse(req.body);
+    console.log('Validated data:', validatedData);
     
     const log = await prisma.consumptionLog.create({
       data: {
-        ingredientId: validatedData.ingredientId,
-        dishId: validatedData.dishId,
+        ingredientId: validatedData.ingredientId || undefined,
+        dishId: validatedData.dishId || undefined,
         quantity: validatedData.quantity,
-        unit: validatedData.unit,
+        unit: validatedData.unit || undefined,
         consumedAt: validatedData.consumedAt ? new Date(validatedData.consumedAt) : new Date(),
       },
       include: {
@@ -71,6 +73,10 @@ router.post('/', async (req: any, res: any) => {
     res.status(201).json(log);
   } catch (error) {
     console.error('Error creating consumption log:', error);
+    if (error instanceof Error) {
+      console.error('Error details:', error.message);
+      console.error('Error stack:', error.stack);
+    }
     res.status(500).json({ error: 'Failed to create consumption log' });
   }
 });
