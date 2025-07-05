@@ -70,8 +70,9 @@ jobs:
         # Run database migrations
         docker-compose exec -T api npx prisma migrate deploy || true
         
-        # Seed database
-        docker-compose exec -T api npm run seed || echo "Database seeding skipped"
+        # Seed database (only if empty)
+        echo "Seeding database with mock data..."
+        docker-compose exec -T api npm run seed || echo "Database seeding skipped or failed"
         
         # Show running containers
         docker-compose ps

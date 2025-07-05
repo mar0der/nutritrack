@@ -5,11 +5,18 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Seeding database with mock data...');
 
-  // Clear existing data
-  await prisma.consumptionLog.deleteMany();
-  await prisma.dishIngredient.deleteMany();
-  await prisma.dish.deleteMany();
-  await prisma.ingredient.deleteMany();
+  // Check if database already has data
+  const existingIngredientsCount = await prisma.ingredient.count();
+  const existingDishesCount = await prisma.dish.count();
+  
+  if (existingIngredientsCount > 0 || existingDishesCount > 0) {
+    console.log(`📊 Database already contains ${existingIngredientsCount} ingredients and ${existingDishesCount} dishes`);
+    console.log('🔄 Skipping seeding to preserve existing data');
+    console.log('💡 To force reset, run: npm run seed:reset');
+    return;
+  }
+
+  console.log('📦 Database is empty, proceeding with seeding...');
 
   // Create ingredients
   const ingredients = await Promise.all([

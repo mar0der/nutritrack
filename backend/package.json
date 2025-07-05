@@ -11,6 +11,7 @@
     "db:migrate": "npx prisma migrate dev",
     "db:studio": "npx prisma studio",
     "seed": "npx ts-node scripts/seed-database.ts",
+    "seed:reset": "npx ts-node scripts/reset-database.ts && npx ts-node scripts/seed-database.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
