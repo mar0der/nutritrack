@@ -50,5 +50,6 @@ vite.config.ts.timestamp-*
 *.tmp
 *.temp
 
-# Deployment (manual transfer to server)
-deployment/
+# Deployment logs only (keep deployment config files)
+deployment/logs/
+deployment/ssl/
