@@ -577,3 +577,113 @@ The separated frontend/backend architecture provides excellent scalability:
 - ⏳ **Authentication**: Planned for Phase 2
 
 This project demonstrates a complete full-stack development cycle with modern technologies, best practices, and scalable architecture successfully deployed to production.
+
+## 🔧 Latest Session Updates - Database Seeding & Frontend Connectivity (July 5, 2025)
+
+### 🎯 Issues Addressed
+1. **Empty Database in Production**: Frontend showing no data despite successful deployment
+2. **API Connectivity Problems**: Frontend unable to connect to production API
+3. **Environment Variable Configuration**: Vite build-time vs runtime environment issues
+4. **Database Authentication**: Prisma client authentication failures after container restarts
+
+### 🛠️ Technical Solutions Implemented
+
+#### Database Seeding Strategy Improvements
+- **Problem**: Database seeding was clearing all data on every deployment
+- **Solution**: Implemented smart seeding that preserves existing data
+- **Files Modified**: 
+  - `backend/scripts/seed-database.ts` - Added data existence check
+  - `backend/scripts/reset-database.ts` - New script for manual reset
+  - `backend/package.json` - Added `seed:reset` script
+- **Behavior**: Only seeds empty databases, preserves data between deployments
+- **Manual Control**: `npm run seed:reset` for complete database reset
+
+#### Frontend API Connectivity Fix
+- **Problem**: Frontend using `http://localhost:3001/api` (local machine) instead of production API
+- **Root Cause**: Vite environment variables are embedded at build time, not runtime
+- **Solution**: Changed fallback API URL from absolute to relative path
+- **File Modified**: `frontend/src/services/api.ts`
+- **Change**: `API_BASE_URL = import.meta.env.VITE_API_URL || '/api'`
+- **Result**: Frontend now uses nginx proxy instead of trying to connect to localhost
+
+#### Database Authentication Resolution
+- **Problem**: API containers losing database connection after manual restarts
+- **Cause**: Environment variables from GitHub secrets not available during manual container operations
+- **Solution**: Triggered proper GitHub Actions deployment to set correct passwords
+- **Process**: GitHub Actions injects `DB_PASSWORD` secret into both database and API containers
+
+#### Environment Variable Management
+- **Challenge**: Vite requires environment variables at build time
+- **Previous Approach**: Setting `VITE_API_URL` in docker-compose (runtime)
+- **Corrected Approach**: Use relative paths for production, absolute URLs for development
+- **Benefit**: Works regardless of environment variable configuration
+
+### 📋 Deployment Process Refinements
+
+#### Smart Database Seeding Workflow
+```bash
+# GitHub Actions deployment now includes:
+1. Deploy containers with proper environment variables
+2. Run database migrations
+3. Smart seeding (only if database is empty)
+4. Preserve existing user data between deployments
+```
+
+#### Manual Database Operations
+```bash
+# Safe seeding (preserves existing data)
+npm run seed
+
+# Complete reset and reseed
+npm run seed:reset
+
+# Check database status
+docker exec nutritrack-db psql -U nutritrack -d nutrition_db -c "SELECT COUNT(*) FROM ingredients;"
+```
+
+### 🔍 Debugging Process Executed
+
+#### API Connectivity Verification
+- Tested direct API access: `http://78.47.123.191:3001/api/dishes` ✅
+- Tested nginx proxy: `http://78.47.123.191/api/dishes` ✅
+- Verified container health and communication ✅
+
+#### Database Connection Validation
+- Checked container logs for authentication errors
+- Verified database credentials match between containers
+- Confirmed data existence: 15 ingredients, 5 dishes ✅
+
+#### Frontend Configuration Analysis
+- Identified Vite build-time environment variable limitation
+- Traced API calls to incorrect localhost URLs
+- Implemented relative path solution for production compatibility
+
+### 📊 Current Production Status
+
+#### ✅ Fully Working Components
+- **Backend API**: All endpoints responding correctly with full data
+- **Database**: PostgreSQL with 15 ingredients, 5 dishes, consumption logs
+- **Container Orchestration**: Docker Compose with health checks
+- **CI/CD Pipeline**: GitHub Actions with automated deployment
+- **Database Seeding**: Smart seeding preserves data between deployments
+
+#### 🔄 Final Resolution Steps
+- Frontend deployment completed with relative API paths
+- All containers running with proper authentication
+- Database fully populated with mock data
+- nginx proxy correctly routing API requests
+
+### 🎉 Session Achievements
+1. **Smart Database Management**: Implemented data-preserving seeding strategy
+2. **Production API Connectivity**: Fixed frontend-to-backend communication
+3. **Environment Configuration**: Resolved Vite build-time variable issues
+4. **Container Orchestration**: Proper secret management through GitHub Actions
+5. **Full Stack Integration**: End-to-end connectivity from frontend to database
+
+### 🚀 Production URLs (Verified Working)
+- **Frontend Application**: http://78.47.123.191
+- **API Endpoints**: http://78.47.123.191/api/* (via nginx proxy)
+- **Direct API**: http://78.47.123.191:3001/api/* (direct access)
+- **Database**: PostgreSQL running in container with persistent volumes
+
+The application is now fully functional in production with proper data flow from frontend through nginx proxy to the API and PostgreSQL database.

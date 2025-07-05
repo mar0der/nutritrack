@@ -51,6 +51,10 @@ jobs:
         # Make scripts executable
         chmod +x *.sh || true
         
+        # Generate SSL certificates
+        echo "🔒 Generating SSL certificates..."
+        ./generate-ssl.sh
+        
         # Stop existing containers
         docker-compose down --remove-orphans || true
         
@@ -58,7 +62,7 @@ jobs:
         export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
         export NODE_ENV=production
         export PORT=3001
-        export VITE_API_URL="http://${{ secrets.SERVER_HOST }}:3001"
+        export VITE_API_URL="https://${{ secrets.SERVER_HOST }}"
         
         # Build and start services with environment variables
         docker-compose up -d --build
@@ -87,11 +91,11 @@ jobs:
         echo "Checking if services are running..."
         sleep 10
         
-        # Check if web service is accessible
-        curl -f http://${{ secrets.SERVER_HOST }}/ || echo "Frontend not yet accessible"
+        # Check if web service is accessible (HTTPS)
+        curl -f -k https://${{ secrets.SERVER_HOST }}/ || echo "Frontend not yet accessible"
         
-        # Check if API service is accessible
-        curl -f http://${{ secrets.SERVER_HOST }}:3001/health || echo "API not yet accessible"
+        # Check if API service is accessible (through HTTPS proxy)
+        curl -f -k https://${{ secrets.SERVER_HOST }}/health || echo "API not yet accessible"
         
     - name: Cleanup
       run: |
