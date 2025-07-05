@@ -1,12 +1,8 @@
-# Backend Dockerfile - Ubuntu 24 Ready - Single Stage
+# Backend Dockerfile - Simplified approach
 FROM node:22-alpine3.20
 
 # Install system dependencies
-RUN apk add --no-cache \
-    curl \
-    postgresql-client \
-    tzdata \
-    ca-certificates
+RUN apk add --no-cache curl postgresql-client tzdata ca-certificates
 
 # Set timezone
 ENV TZ=UTC
@@ -17,8 +13,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install ALL dependencies first
-RUN npm ci --ignore-scripts
+# Install dependencies
+RUN npm ci
 
 # Copy source code
 COPY . .
@@ -29,28 +25,14 @@ RUN npx prisma generate
 # Build the application
 RUN npm run build
 
-# Remove dev dependencies to save space
-RUN npm prune --omit=dev
-
-# Verify build output exists
-RUN ls -la dist/ && test -f dist/server.js
-
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nutritrack -u 1001
-
-# Change ownership of the app directory  
-RUN chown -R nutritrack:nodejs /app
-
-# Switch to non-root user
-USER nutritrack
+# List contents to verify build
+RUN echo "=== Checking build output ===" && \
+    ls -la dist/ && \
+    echo "server.js content preview:" && \
+    head -5 dist/server.js
 
 # Expose port
 EXPOSE 3001
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3001/health || exit 1
-
-# Start the application - use absolute path
-CMD ["node", "/app/dist/server.js"]
+# Start the application directly (run as root for now)
+CMD ["node", "dist/server.js"]
