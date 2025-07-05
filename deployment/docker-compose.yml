@@ -39,9 +39,6 @@ services:
         condition: service_healthy
     networks:
       - nutritrack
-    volumes:
-      - ../backend:/app
-      - /app/node_modules
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s
