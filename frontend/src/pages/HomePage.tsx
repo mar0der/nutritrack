@@ -90,7 +90,7 @@ export default function HomePage() {
           <p className="text-gray-600">Built to help you achieve nutritional variety effortlessly</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {benefits.map((benefit, index) => (
+          {benefits.map((benefit) => (
             <div key={benefit} className="flex items-center space-x-3 p-4 rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 border border-green-100">
               <CheckCircleIcon className="h-6 w-6 text-green-500 flex-shrink-0" />
               <span className="text-gray-700 font-medium">{benefit}</span>
@@ -111,7 +111,7 @@ export default function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {features.map((feature, index) => (
+          {features.map((feature) => (
             <Link
               key={feature.name}
               to={feature.href}
