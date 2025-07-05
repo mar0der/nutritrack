@@ -51,9 +51,25 @@ jobs:
         # Make scripts executable
         chmod +x *.sh || true
         
-        # Generate SSL certificates
-        echo "🔒 Generating SSL certificates..."
-        ./generate-ssl.sh
+        # Generate SSL certificates (Let's Encrypt or self-signed fallback)
+        echo "🔒 Setting up SSL certificates..."
+        if [ -n "${{ secrets.DOMAIN_NAME }}" ]; then
+          echo "🌐 Using Let's Encrypt for domain: ${{ secrets.DOMAIN_NAME }}"
+          # Generate production nginx config with domain
+          export DOMAIN_NAME="${{ secrets.DOMAIN_NAME }}"
+          ./generate-nginx-config.sh
+          # Use production docker-compose if certificates exist
+          if [ -f "/etc/letsencrypt/live/${{ secrets.DOMAIN_NAME }}/fullchain.pem" ]; then
+            echo "✅ Let's Encrypt certificates found"
+            cp docker-compose.prod.yml docker-compose.yml
+          else
+            echo "⚠️ Let's Encrypt certificates not found, using self-signed fallback"
+            ./generate-ssl.sh
+          fi
+        else
+          echo "🔒 Using self-signed certificates (no domain configured)"
+          ./generate-ssl.sh
+        fi
         
         # Stop existing containers
         docker-compose down --remove-orphans || true
@@ -62,7 +78,14 @@ jobs:
         export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
         export NODE_ENV=production
         export PORT=3001
-        export VITE_API_URL="https://${{ secrets.SERVER_HOST }}"
+        export DOMAIN_NAME="${{ secrets.DOMAIN_NAME }}"
+        
+        # Set API URL based on domain configuration
+        if [ -n "${{ secrets.DOMAIN_NAME }}" ]; then
+          export VITE_API_URL="https://${{ secrets.DOMAIN_NAME }}"
+        else
+          export VITE_API_URL="https://${{ secrets.SERVER_HOST }}"
+        fi
         
         # Build and start services with environment variables
         docker-compose up -d --build
