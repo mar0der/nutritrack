@@ -48,20 +48,19 @@ jobs:
         # Navigate to deployment directory
         cd deployment
         
-        # Create .env file from template if it doesn't exist
-        if [ ! -f .env ]; then
-          cp .env.production .env
-          # Update database password
-          sed -i "s/your_secure_password_here/${{ secrets.DB_PASSWORD }}/g" .env
-        fi
-        
         # Make scripts executable
-        chmod +x *.sh
+        chmod +x *.sh || true
         
         # Stop existing containers
         docker-compose down --remove-orphans || true
         
-        # Build and start services
+        # Export environment variables for docker-compose
+        export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
+        export NODE_ENV=production
+        export PORT=3001
+        export VITE_API_URL="http://${{ secrets.SERVER_HOST }}:3001"
+        
+        # Build and start services with environment variables
         docker-compose up -d --build
         
         # Wait for database to be ready
