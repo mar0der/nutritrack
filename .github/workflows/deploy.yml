@@ -1,0 +1,98 @@
+name: Deploy NutriTrack to Ubuntu Server
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        
+    - name: Create SSH key file
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+        
+    - name: Deploy to server
+      run: |
+        ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+        
+        # Create app directory if it doesn't exist
+        sudo mkdir -p /var/www/nutritrack
+        sudo chown $USER:$USER /var/www/nutritrack
+        
+        # Navigate to app directory
+        cd /var/www/nutritrack
+        
+        # Clone or pull latest code
+        if [ -d ".git" ]; then
+          echo "Pulling latest changes..."
+          git pull origin main
+        else
+          echo "Cloning repository..."
+          git clone https://github.com/mar0der/nutritrack.git .
+        fi
+        
+        # Navigate to deployment directory
+        cd deployment
+        
+        # Create .env file from template if it doesn't exist
+        if [ ! -f .env ]; then
+          cp .env.production .env
+          # Update database password
+          sed -i "s/your_secure_password_here/${{ secrets.DB_PASSWORD }}/g" .env
+        fi
+        
+        # Make scripts executable
+        chmod +x *.sh
+        
+        # Stop existing containers
+        docker-compose down --remove-orphans || true
+        
+        # Build and start services
+        docker-compose up -d --build
+        
+        # Wait for database to be ready
+        echo "Waiting for database to be ready..."
+        sleep 30
+        
+        # Run database migrations
+        docker-compose exec -T api npx prisma migrate deploy || true
+        
+        # Seed database
+        docker-compose exec -T api npm run seed || echo "Database seeding skipped"
+        
+        # Show running containers
+        docker-compose ps
+        
+        # Show logs for debugging
+        docker-compose logs --tail=50
+        
+        EOF
+        
+    - name: Verify deployment
+      run: |
+        echo "Checking if services are running..."
+        sleep 10
+        
+        # Check if web service is accessible
+        curl -f http://${{ secrets.SERVER_HOST }}/ || echo "Frontend not yet accessible"
+        
+        # Check if API service is accessible
+        curl -f http://${{ secrets.SERVER_HOST }}:3001/health || echo "API not yet accessible"
+        
+    - name: Cleanup
+      run: |
+        rm -f ~/.ssh/id_rsa
