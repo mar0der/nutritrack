@@ -55,16 +55,25 @@ jobs:
         echo "🔒 Setting up SSL certificates..."
         if [ -n "${{ secrets.DOMAIN_NAME }}" ]; then
           echo "🌐 Using Let's Encrypt for domain: ${{ secrets.DOMAIN_NAME }}"
-          # Generate production nginx config with domain
-          export DOMAIN_NAME="${{ secrets.DOMAIN_NAME }}"
-          ./generate-nginx-config.sh
-          # Use production docker-compose if certificates exist
-          if [ -f "/etc/letsencrypt/live/${{ secrets.DOMAIN_NAME }}/fullchain.pem" ]; then
-            echo "✅ Let's Encrypt certificates found"
-            cp docker-compose.prod.yml docker-compose.yml
+          
+          # Check if Let's Encrypt certificates already exist
+          if [ -f "letsencrypt/live/${{ secrets.DOMAIN_NAME }}/fullchain.pem" ]; then
+            echo "✅ Let's Encrypt certificates found, using existing certificates"
           else
-            echo "⚠️ Let's Encrypt certificates not found, using self-signed fallback"
-            ./generate-ssl.sh
+            echo "🔧 Generating new Let's Encrypt certificates..."
+            # Run Docker-based Let's Encrypt setup
+            ./docker-letsencrypt-setup.sh ${{ secrets.DOMAIN_NAME }} admin@${{ secrets.DOMAIN_NAME }}
+          fi
+          
+          # Use production docker-compose with Let's Encrypt
+          if [ -f "docker-compose-production.yml" ]; then
+            echo "📋 Using production Docker Compose configuration"
+            cp docker-compose-production.yml docker-compose.yml
+          else
+            echo "⚠️ Production config not found, creating it..."
+            export DOMAIN_NAME="${{ secrets.DOMAIN_NAME }}"
+            ./generate-nginx-config.sh
+            cp docker-compose.prod.yml docker-compose.yml
           fi
         else
           echo "🔒 Using self-signed certificates (no domain configured)"
@@ -114,11 +123,20 @@ jobs:
         echo "Checking if services are running..."
         sleep 10
         
+        # Determine the URL to test based on domain configuration
+        if [ -n "${{ secrets.DOMAIN_NAME }}" ]; then
+          TEST_URL="https://${{ secrets.DOMAIN_NAME }}"
+          echo "Testing domain: ${{ secrets.DOMAIN_NAME }}"
+        else
+          TEST_URL="https://${{ secrets.SERVER_HOST }}"
+          echo "Testing server IP: ${{ secrets.SERVER_HOST }}"
+        fi
+        
         # Check if web service is accessible (HTTPS)
-        curl -f -k https://${{ secrets.SERVER_HOST }}/ || echo "Frontend not yet accessible"
+        curl -f -k "$TEST_URL/" || echo "Frontend not yet accessible at $TEST_URL"
         
         # Check if API service is accessible (through HTTPS proxy)
-        curl -f -k https://${{ secrets.SERVER_HOST }}/health || echo "API not yet accessible"
+        curl -f -k "$TEST_URL/health" || echo "API not yet accessible at $TEST_URL"
         
     - name: Cleanup
       run: |
