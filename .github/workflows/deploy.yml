@@ -80,8 +80,8 @@ jobs:
           ./generate-ssl.sh
         fi
         
-        # Stop existing containers
-        docker-compose down --remove-orphans || true
+        # Stop existing containers (but preserve volumes)
+        docker-compose down || true
         
         # Export environment variables for docker-compose
         export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
@@ -98,6 +98,13 @@ jobs:
         
         # Build and start services with environment variables
         docker-compose up -d --build
+        
+        # Ensure Let's Encrypt certificates are preserved
+        if [ -n "${{ secrets.DOMAIN_NAME }}" ] && [ -d "letsencrypt/live/${{ secrets.DOMAIN_NAME }}" ]; then
+          echo "✅ Let's Encrypt certificates preserved for ${{ secrets.DOMAIN_NAME }}"
+          # Verify certificate validity
+          openssl x509 -in "letsencrypt/live/${{ secrets.DOMAIN_NAME }}/cert.pem" -text -noout | grep "Not After" || echo "Certificate check skipped"
+        fi
         
         # Wait for database to be ready
         echo "Waiting for database to be ready..."
