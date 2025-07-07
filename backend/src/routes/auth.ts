@@ -158,17 +158,37 @@ router.post('/login', async (req: any, res: any) => {
 });
 
 // Google OAuth routes
-router.get('/google', 
-  passport.authenticate('google', { scope: ['profile', 'email'] })
-);
+router.get('/google', (req: any, res: any, next: any) => {
+  console.log('🔍 Google OAuth initiation requested');
+  console.log('🔍 Environment check:', {
+    NODE_ENV: process.env.NODE_ENV,
+    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? 'SET' : 'MISSING',
+    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ? 'SET' : 'MISSING'
+  });
+  passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
+});
 
 router.get('/google/callback',
-  passport.authenticate('google', { session: false }),
+  (req: any, res: any, next: any) => {
+    console.log('🔍 Google OAuth callback received');
+    passport.authenticate('google', { session: false }, (err: any, user: any, info: any) => {
+      console.log('🔍 Passport authenticate result:', { err: err?.message, user: user?.email, info });
+      if (err) {
+        console.error('🚨 Google OAuth error:', err);
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        return res.redirect(`${frontendUrl}/login?error=oauth_error`);
+      }
+      req.user = user;
+      next();
+    })(req, res, next);
+  },
   async (req: any, res: any) => {
     try {
       const user = req.user as any;
+      console.log('🔍 Processing OAuth callback for user:', user?.email);
       
       if (!user) {
+        console.log('🚨 No user found in OAuth callback');
         return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=oauth_failed`);
       }
 
@@ -307,5 +327,21 @@ if (process.env.NODE_ENV !== 'production') {
     }
   });
 }
+
+// Debug endpoint to check OAuth configuration
+router.get('/debug/oauth', (req: any, res: any) => {
+  const hasGoogleClientId = !!process.env.GOOGLE_CLIENT_ID;
+  const hasGoogleClientSecret = !!process.env.GOOGLE_CLIENT_SECRET;
+  const strategies = passport._strategies || {};
+  
+  res.json({
+    environment: process.env.NODE_ENV,
+    oauth: {
+      googleClientId: hasGoogleClientId,
+      googleClientSecret: hasGoogleClientSecret,
+      strategies: Object.keys(strategies)
+    }
+  });
+});
 
 export default router;
