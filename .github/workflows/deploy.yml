@@ -98,6 +98,11 @@ jobs:
           echo "⚠️ Using fallback GOOGLE_CLIENT_ID"
         fi
         
+        if [ -z "$GOOGLE_CLIENT_SECRET" ]; then
+          export GOOGLE_CLIENT_SECRET="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"
+          echo "⚠️ Using fallback GOOGLE_CLIENT_SECRET"
+        fi
+        
         if [ -z "$JWT_SECRET" ]; then
           export JWT_SECRET="super-secret-jwt-key-for-production"
           echo "⚠️ Using fallback JWT_SECRET"
@@ -113,18 +118,16 @@ jobs:
         
         # Debug: Check raw secret values (first few characters only)
         echo "🔍 Raw secret check:"
-        echo "GOOGLE_CLIENT_ID starts with: \${GOOGLE_CLIENT_ID:0:10}..."
-        echo "JWT_SECRET starts with: \${JWT_SECRET:0:10}..."
+        echo "GOOGLE_CLIENT_ID length: \${#GOOGLE_CLIENT_ID}"
+        echo "JWT_SECRET length: \${#JWT_SECRET}"
         
         # Create .env file for docker-compose
-        cat > .env << ENVEOF
-        DOMAIN_NAME=\${DOMAIN_NAME}
-        DB_PASSWORD=\${DB_PASSWORD}
-        GOOGLE_CLIENT_ID=\${GOOGLE_CLIENT_ID}
-        GOOGLE_CLIENT_SECRET=\${GOOGLE_CLIENT_SECRET}
-        JWT_SECRET=\${JWT_SECRET}
-        VITE_API_URL=/api
-        ENVEOF
+        echo "DOMAIN_NAME=${DOMAIN_NAME}" > .env
+        echo "DB_PASSWORD=${DB_PASSWORD}" >> .env
+        echo "GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}" >> .env
+        echo "GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}" >> .env
+        echo "JWT_SECRET=${JWT_SECRET}" >> .env
+        echo "VITE_API_URL=/api" >> .env
         
         # Debug: Show .env file contents (mask sensitive data)
         echo "🔍 .env file contents:"
