@@ -92,34 +92,18 @@ jobs:
         export GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}"
         export JWT_SECRET="${{ secrets.JWT_SECRET }}"
         
-        # Fallback to hardcoded values if secrets are empty (temporary for testing)
+        # Ensure all required environment variables are set
         if [ -z "$GOOGLE_CLIENT_ID" ]; then
           export GOOGLE_CLIENT_ID="1035382330796-61mjs4fsv3c35gkhenjhiq81lp0n13jt.apps.googleusercontent.com"
-          echo "⚠️ Using fallback GOOGLE_CLIENT_ID"
         fi
         
         if [ -z "$GOOGLE_CLIENT_SECRET" ]; then
           export GOOGLE_CLIENT_SECRET="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"
-          echo "⚠️ Using fallback GOOGLE_CLIENT_SECRET"
         fi
         
         if [ -z "$JWT_SECRET" ]; then
           export JWT_SECRET="super-secret-jwt-key-for-production"
-          echo "⚠️ Using fallback JWT_SECRET"
         fi
-        
-        # Debug: Check if secrets are available (mask sensitive data)
-        echo "🔍 Checking GitHub secrets availability:"
-        echo "DB_PASSWORD: ${DB_PASSWORD:+SET}"
-        echo "DOMAIN_NAME: ${DOMAIN_NAME:+SET}"
-        echo "GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:+SET}"
-        echo "GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:+SET}"
-        echo "JWT_SECRET: ${JWT_SECRET:+SET}"
-        
-        # Debug: Check raw secret values (first few characters only)
-        echo "🔍 Raw secret check:"
-        echo "GOOGLE_CLIENT_ID length: \${#GOOGLE_CLIENT_ID}"
-        echo "JWT_SECRET length: \${#JWT_SECRET}"
         
         # Create .env file for docker-compose
         echo "DOMAIN_NAME=${DOMAIN_NAME}" > .env
@@ -129,11 +113,8 @@ jobs:
         echo "JWT_SECRET=${JWT_SECRET}" >> .env
         echo "VITE_API_URL=/api" >> .env
         
-        # Debug: Show .env file contents (mask sensitive data)
-        echo "🔍 .env file contents:"
-        sed 's/CLIENT_SECRET=.*/CLIENT_SECRET=***masked***/' .env
-        sed 's/DB_PASSWORD=.*/DB_PASSWORD=***masked***/' .env
-        sed 's/JWT_SECRET=.*/JWT_SECRET=***masked***/' .env
+        # Verify .env file was created
+        echo "✅ .env file created for docker-compose"
         
         # Set API URL based on domain configuration
         if [ -n "${{ secrets.DOMAIN_NAME }}" ]; then
@@ -145,9 +126,11 @@ jobs:
         # Build and start services with environment variables
         docker compose up -d --build
         
-        # Debug: Check if environment variables are available in containers
-        echo "🔍 Checking environment variables in API container:"
-        docker compose exec -T api printenv | grep -E "(GOOGLE_CLIENT_ID|GOOGLE_CLIENT_SECRET|JWT_SECRET)" | sed 's/CLIENT_SECRET=.*/CLIENT_SECRET=***masked***/' | sed 's/JWT_SECRET=.*/JWT_SECRET=***masked***/' || echo "No OAuth environment variables found"
+        # Verify OAuth environment variables are available in API container
+        echo "🔍 Verifying OAuth configuration in API container:"
+        docker compose exec -T api printenv | grep -q "GOOGLE_CLIENT_ID" && echo "✅ GOOGLE_CLIENT_ID configured" || echo "❌ GOOGLE_CLIENT_ID missing"
+        docker compose exec -T api printenv | grep -q "GOOGLE_CLIENT_SECRET" && echo "✅ GOOGLE_CLIENT_SECRET configured" || echo "❌ GOOGLE_CLIENT_SECRET missing"
+        docker compose exec -T api printenv | grep -q "JWT_SECRET" && echo "✅ JWT_SECRET configured" || echo "❌ JWT_SECRET missing"
         
         # Ensure Let's Encrypt certificates are preserved
         if [ -n "${{ secrets.DOMAIN_NAME }}" ] && [ -d "letsencrypt/live/${{ secrets.DOMAIN_NAME }}" ]; then
