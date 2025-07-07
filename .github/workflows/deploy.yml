@@ -88,6 +88,9 @@ jobs:
         export NODE_ENV=production
         export PORT=3001
         export DOMAIN_NAME="${{ secrets.DOMAIN_NAME }}"
+        export GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}"
+        export GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}"
+        export JWT_SECRET="${{ secrets.JWT_SECRET }}"
         
         # Set API URL based on domain configuration
         if [ -n "${{ secrets.DOMAIN_NAME }}" ]; then

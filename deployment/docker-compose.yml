@@ -33,6 +33,10 @@ services:
       NODE_ENV: production
       DATABASE_URL: postgresql://nutritrack:${DB_PASSWORD:-nutritrack123}@db:5432/nutrition_db
       PORT: 3001
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      JWT_SECRET: ${JWT_SECRET:-super-secret-jwt-key-for-development-only}
+      FRONTEND_URL: https://${DOMAIN_NAME:-78.47.123.191}
     ports:
       - "3001:3001"
     depends_on:
