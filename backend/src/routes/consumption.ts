@@ -1,8 +1,12 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { CreateConsumptionLogSchema } from '../types';
+import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
+
+// Apply authentication to all consumption routes
+router.use(authenticateToken);
 
 // GET /api/consumption - Get consumption logs
 router.get('/', async (req: any, res: any) => {
@@ -13,6 +17,7 @@ router.get('/', async (req: any, res: any) => {
     
     const logs = await prisma.consumptionLog.findMany({
       where: {
+        userId: req.user.userId,
         consumedAt: {
           gte: daysAgo,
         },
@@ -50,6 +55,7 @@ router.post('/', async (req: any, res: any) => {
     
     const log = await prisma.consumptionLog.create({
       data: {
+        userId: req.user.userId,
         ingredientId: validatedData.ingredientId || undefined,
         dishId: validatedData.dishId || undefined,
         quantity: validatedData.quantity,
@@ -91,6 +97,7 @@ router.get('/recent-ingredients', async (req: any, res: any) => {
     // Get ingredient IDs from direct consumption
     const directIngredients = await prisma.consumptionLog.findMany({
       where: {
+        userId: req.user.userId,
         consumedAt: {
           gte: daysAgo,
         },
@@ -107,6 +114,7 @@ router.get('/recent-ingredients', async (req: any, res: any) => {
     // Get ingredient IDs from dishes consumed
     const dishLogs = await prisma.consumptionLog.findMany({
       where: {
+        userId: req.user.userId,
         consumedAt: {
           gte: daysAgo,
         },

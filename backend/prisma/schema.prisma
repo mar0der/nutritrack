@@ -60,6 +60,7 @@ model DishIngredient {
 
 model ConsumptionLog {
   id           String    @id @default(cuid())
+  userId       String
   ingredientId String?
   dishId       String?
   quantity     Float
@@ -67,18 +68,56 @@ model ConsumptionLog {
   consumedAt   DateTime  @default(now())
   
   // Relations
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   ingredient Ingredient? @relation(fields: [ingredientId], references: [id], onDelete: SetNull)
   dish       Dish?       @relation(fields: [dishId], references: [id], onDelete: SetNull)
   
   @@map("consumption_logs")
 }
 
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String
+  avatar        String?
+  provider      String   @default("email") // "email", "google"
+  providerId    String?  // Google ID for OAuth users
+  passwordHash  String?  // Only for email/password users
+  emailVerified Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  sessions         Session[]
+  consumptionLogs  ConsumptionLog[]
+  userPreferences  UserPreference[]
+  
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("sessions")
+}
+
 model UserPreference {
   id                    String @id @default(cuid())
+  userId                String
   avoidPeriodDays       Int    @default(7)
   dietaryRestrictions   String[]
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
+  
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   @@map("user_preferences")
 }

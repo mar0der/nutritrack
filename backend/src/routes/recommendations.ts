@@ -1,7 +1,11 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
+import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
+
+// Apply authentication to all recommendation routes
+router.use(authenticateToken);
 
 // GET /api/recommendations - Get dish recommendations
 router.get('/', async (req: any, res: any) => {
@@ -10,9 +14,10 @@ router.get('/', async (req: any, res: any) => {
     const daysAgo = new Date();
     daysAgo.setDate(daysAgo.getDate() - parseInt(days as string));
     
-    // Get recently consumed ingredient IDs
+    // Get recently consumed ingredient IDs for current user
     const recentLogs = await prisma.consumptionLog.findMany({
       where: {
+        userId: req.user.userId,
         consumedAt: {
           gte: daysAgo,
         },

@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import passport from './lib/passport';
 
 dotenv.config();
 
@@ -10,7 +11,12 @@ const app = express();
 
 // Security middleware
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://nutritrackapi.duckdns.org', 'http://nutritrackapi.duckdns.org']
+    : ['http://localhost:5173', 'http://localhost:3000'],
+  credentials: true
+}));
 
 // Logging middleware
 app.use(morgan('combined'));
@@ -18,6 +24,9 @@ app.use(morgan('combined'));
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Initialize Passport
+app.use(passport.initialize());
 
 // Health check endpoint
 app.get('/health', (req, res) => {
