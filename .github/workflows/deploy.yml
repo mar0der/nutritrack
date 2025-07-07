@@ -8,6 +8,10 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+      GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
     
     steps:
     - name: Checkout code
@@ -96,9 +100,9 @@ jobs:
         {
           echo "DOMAIN_NAME=${{ secrets.DOMAIN_NAME }}"
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}"
-          echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}"
-          echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}"
-          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}"
+          echo "GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}"
+          echo "GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}"
+          echo "JWT_SECRET=${JWT_SECRET}"
           echo "VITE_API_URL=/api"
         } > .env
         
