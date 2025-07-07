@@ -113,8 +113,8 @@ jobs:
         
         # Debug: Check raw secret values (first few characters only)
         echo "🔍 Raw secret check:"
-        echo "GOOGLE_CLIENT_ID starts with: ${GOOGLE_CLIENT_ID:0:10}..."
-        echo "JWT_SECRET starts with: ${JWT_SECRET:0:10}..."
+        echo "GOOGLE_CLIENT_ID starts with: \${GOOGLE_CLIENT_ID:0:10}..."
+        echo "JWT_SECRET starts with: \${JWT_SECRET:0:10}..."
         
         # Create .env file for docker-compose
         cat > .env << ENVEOF
