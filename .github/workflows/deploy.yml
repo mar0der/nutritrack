@@ -92,18 +92,10 @@ jobs:
         export GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}"
         export JWT_SECRET="${{ secrets.JWT_SECRET }}"
         
-        # Ensure all required environment variables are set
-        if [ -z "$GOOGLE_CLIENT_ID" ]; then
-          export GOOGLE_CLIENT_ID="1035382330796-61mjs4fsv3c35gkhenjhiq81lp0n13jt.apps.googleusercontent.com"
-        fi
-        
-        if [ -z "$GOOGLE_CLIENT_SECRET" ]; then
-          export GOOGLE_CLIENT_SECRET="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"
-        fi
-        
-        if [ -z "$JWT_SECRET" ]; then
-          export JWT_SECRET="super-secret-jwt-key-for-production"
-        fi
+        # Set default values for missing environment variables
+        export GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:-1035382330796-61mjs4fsv3c35gkhenjhiq81lp0n13jt.apps.googleusercontent.com}"
+        export GOOGLE_CLIENT_SECRET="${GOOGLE_CLIENT_SECRET:-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}"
+        export JWT_SECRET="${JWT_SECRET:-super-secret-jwt-key-for-production}"
         
         # Create .env file for docker-compose
         echo "DOMAIN_NAME=${DOMAIN_NAME}" > .env
@@ -113,8 +105,6 @@ jobs:
         echo "JWT_SECRET=${JWT_SECRET}" >> .env
         echo "VITE_API_URL=/api" >> .env
         
-        # Verify .env file was created
-        echo "✅ .env file created for docker-compose"
         
         # Set API URL based on domain configuration
         if [ -n "${{ secrets.DOMAIN_NAME }}" ]; then
@@ -126,11 +116,6 @@ jobs:
         # Build and start services with environment variables
         docker compose up -d --build
         
-        # Verify OAuth environment variables are available in API container
-        echo "🔍 Verifying OAuth configuration in API container:"
-        docker compose exec -T api printenv | grep -q "GOOGLE_CLIENT_ID" && echo "✅ GOOGLE_CLIENT_ID configured" || echo "❌ GOOGLE_CLIENT_ID missing"
-        docker compose exec -T api printenv | grep -q "GOOGLE_CLIENT_SECRET" && echo "✅ GOOGLE_CLIENT_SECRET configured" || echo "❌ GOOGLE_CLIENT_SECRET missing"
-        docker compose exec -T api printenv | grep -q "JWT_SECRET" && echo "✅ JWT_SECRET configured" || echo "❌ JWT_SECRET missing"
         
         # Ensure Let's Encrypt certificates are preserved
         if [ -n "${{ secrets.DOMAIN_NAME }}" ] && [ -d "letsencrypt/live/${{ secrets.DOMAIN_NAME }}" ]; then
