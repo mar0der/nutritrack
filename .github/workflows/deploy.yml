@@ -102,6 +102,12 @@ jobs:
         VITE_API_URL=/api
         ENVEOF
         
+        # Debug: Show .env file contents (mask sensitive data)
+        echo "🔍 .env file contents:"
+        sed 's/CLIENT_SECRET=.*/CLIENT_SECRET=***masked***/' .env
+        sed 's/DB_PASSWORD=.*/DB_PASSWORD=***masked***/' .env
+        sed 's/JWT_SECRET=.*/JWT_SECRET=***masked***/' .env
+        
         # Set API URL based on domain configuration
         if [ -n "${{ secrets.DOMAIN_NAME }}" ]; then
           export VITE_API_URL="https://${{ secrets.DOMAIN_NAME }}"
@@ -111,6 +117,10 @@ jobs:
         
         # Build and start services with environment variables
         docker compose up -d --build
+        
+        # Debug: Check if environment variables are available in containers
+        echo "🔍 Checking environment variables in API container:"
+        docker compose exec -T api printenv | grep -E "(GOOGLE_CLIENT_ID|GOOGLE_CLIENT_SECRET|JWT_SECRET)" | sed 's/CLIENT_SECRET=.*/CLIENT_SECRET=***masked***/' | sed 's/JWT_SECRET=.*/JWT_SECRET=***masked***/' || echo "No OAuth environment variables found"
         
         # Ensure Let's Encrypt certificates are preserved
         if [ -n "${{ secrets.DOMAIN_NAME }}" ] && [ -d "letsencrypt/live/${{ secrets.DOMAIN_NAME }}" ]; then
