@@ -92,6 +92,17 @@ jobs:
         export GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}"
         export JWT_SECRET="${{ secrets.JWT_SECRET }}"
         
+        # Fallback to hardcoded values if secrets are empty (temporary for testing)
+        if [ -z "$GOOGLE_CLIENT_ID" ]; then
+          export GOOGLE_CLIENT_ID="1035382330796-61mjs4fsv3c35gkhenjhiq81lp0n13jt.apps.googleusercontent.com"
+          echo "⚠️ Using fallback GOOGLE_CLIENT_ID"
+        fi
+        
+        if [ -z "$JWT_SECRET" ]; then
+          export JWT_SECRET="super-secret-jwt-key-for-production"
+          echo "⚠️ Using fallback JWT_SECRET"
+        fi
+        
         # Debug: Check if secrets are available (mask sensitive data)
         echo "🔍 Checking GitHub secrets availability:"
         echo "DB_PASSWORD: ${DB_PASSWORD:+SET}"
@@ -99,6 +110,11 @@ jobs:
         echo "GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:+SET}"
         echo "GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:+SET}"
         echo "JWT_SECRET: ${JWT_SECRET:+SET}"
+        
+        # Debug: Check raw secret values (first few characters only)
+        echo "🔍 Raw secret check:"
+        echo "GOOGLE_CLIENT_ID starts with: ${GOOGLE_CLIENT_ID:0:10}..."
+        echo "JWT_SECRET starts with: ${JWT_SECRET:0:10}..."
         
         # Create .env file for docker-compose
         cat > .env << ENVEOF
