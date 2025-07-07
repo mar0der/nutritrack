@@ -13,7 +13,7 @@ const app = express();
 app.use(helmet());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://nutritrackapi.duckdns.org', 'http://nutritrackapi.duckdns.org']
+    ? ['https://nerdstips.com', 'http://nerdstips.com']
     : ['http://localhost:5173', 'http://localhost:3000'],
   credentials: true
 }));
@@ -39,8 +39,9 @@ app.use('/api', apiRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+  console.error('🚨 Unhandled error:', err.message);
+  console.error('🚨 Stack:', err.stack);
+  res.status(500).json({ error: 'Internal server error', details: err.message });
 });
 
 // 404 handler
