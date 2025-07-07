@@ -93,7 +93,7 @@ jobs:
         export JWT_SECRET="${{ secrets.JWT_SECRET }}"
         
         # Create .env file for docker-compose
-        cat > .env << 'ENVEOF'
+        cat > .env << ENVEOF
         DOMAIN_NAME=${DOMAIN_NAME}
         DB_PASSWORD=${DB_PASSWORD}
         GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
