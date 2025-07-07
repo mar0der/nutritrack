@@ -92,15 +92,13 @@ jobs:
         export GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}"
         export JWT_SECRET="${{ secrets.JWT_SECRET }}"
         
-        # Create .env file for docker-compose
-        cat << EOF > .env
-        DOMAIN_NAME=${{ secrets.DOMAIN_NAME }}
-        DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-        GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-        GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
-        JWT_SECRET=${{ secrets.JWT_SECRET }}
-        VITE_API_URL=/api
-        EOF
+        # Create .env file for docker-compose directly with secrets
+        echo "DOMAIN_NAME=${{ secrets.DOMAIN_NAME }}" > .env
+        echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+        echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
+        echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env
+        echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+        echo "VITE_API_URL=/api" >> .env
         
         
         # Set API URL based on domain configuration
