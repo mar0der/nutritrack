@@ -15,6 +15,7 @@ const callbackURL = process.env.NODE_ENV === 'production'
   : 'http://localhost:3001/api/auth/google/callback';
 
 if (googleClientId && googleClientSecret) {
+  console.log('✅ Initializing Google OAuth strategy');
   passport.use(new GoogleStrategy({
     clientID: googleClientId,
     clientSecret: googleClientSecret,
@@ -73,6 +74,10 @@ if (googleClientId && googleClientSecret) {
       return done(error, undefined);
     }
   }));
+} else {
+  console.error('❌ Google OAuth strategy not initialized - missing credentials:');
+  console.error('GOOGLE_CLIENT_ID:', googleClientId ? 'SET' : 'MISSING');
+  console.error('GOOGLE_CLIENT_SECRET:', googleClientSecret ? 'SET' : 'MISSING');
 }
 
 // JWT Strategy

@@ -158,9 +158,16 @@ router.post('/login', async (req: any, res: any) => {
 });
 
 // Google OAuth routes
-router.get('/google', 
-  passport.authenticate('google', { scope: ['profile', 'email'] })
-);
+router.get('/google', (req: any, res: any, next: any) => {
+  // Check if Google strategy is available
+  if (!passport._strategy('google')) {
+    return res.status(500).json({ 
+      error: 'Google OAuth not configured', 
+      details: 'Google OAuth strategy not initialized' 
+    });
+  }
+  passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
+});
 
 router.get('/google/callback',
   passport.authenticate('google', { session: false }),
