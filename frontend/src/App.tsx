@@ -1,11 +1,17 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
 import Layout from './components/Layout';
 import IngredientsPage from './pages/IngredientsPage';
 import DishesPage from './pages/DishesPage';
 import ConsumptionPage from './pages/ConsumptionPage';
 import RecommendationsPage from './pages/RecommendationsPage';
 import HomePage from './pages/HomePage';
+import { LoginPage } from './pages/auth/LoginPage';
+import { SignupPage } from './pages/auth/SignupPage';
+import { OAuthCallbackPage } from './pages/auth/OAuthCallbackPage';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { useAuthStore } from './stores/authStore';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -17,18 +23,52 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  const { initializeAuth } = useAuthStore();
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/ingredients" element={<IngredientsPage />} />
-            <Route path="/dishes" element={<DishesPage />} />
-            <Route path="/consumption" element={<ConsumptionPage />} />
-            <Route path="/recommendations" element={<RecommendationsPage />} />
-          </Routes>
-        </Layout>
+        <Routes>
+          {/* Public auth routes */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/auth/callback" element={<OAuthCallbackPage />} />
+          
+          {/* Protected app routes */}
+          <Route path="/" element={
+            <Layout>
+              <HomePage />
+            </Layout>
+          } />
+          <Route path="/ingredients" element={
+            <Layout>
+              <IngredientsPage />
+            </Layout>
+          } />
+          <Route path="/dishes" element={
+            <Layout>
+              <DishesPage />
+            </Layout>
+          } />
+          <Route path="/consumption" element={
+            <ProtectedRoute>
+              <Layout>
+                <ConsumptionPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/recommendations" element={
+            <ProtectedRoute>
+              <Layout>
+                <RecommendationsPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+        </Routes>
       </Router>
     </QueryClientProvider>
   );

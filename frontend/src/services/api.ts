@@ -10,9 +10,18 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
   timeout: 10000, // 10 second timeout
+  withCredentials: true,
   // Ensure HTTPS is used in production
   httpsAgent: typeof window === 'undefined' ? undefined : null,
 });
+
+export const setAuthToken = (token: string | null) => {
+  if (token) {
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  } else {
+    delete api.defaults.headers.common['Authorization'];
+  }
+};
 
 // Request interceptor for logging
 api.interceptors.request.use(
@@ -33,6 +42,21 @@ api.interceptors.response.use(
   },
   (error) => {
     console.error('API Error:', error.response?.data || error.message);
+    
+    // Handle authentication errors
+    if (error.response?.status === 401) {
+      // Only auto-redirect if this is NOT an auth/me request (which is handled by auth store)
+      const isAuthCheck = error.config?.url?.includes('/auth/me');
+      
+      if (!isAuthCheck) {
+        // Clear token and redirect to login if not already on auth pages
+        setAuthToken(null);
+        localStorage.removeItem('auth-storage');
+        if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/signup')) {
+          window.location.href = '/login';
+        }
+      }
+    }
     
     // Handle specific HTTPS/SSL errors
     if (error.code === 'CERT_HAS_EXPIRED' || error.code === 'CERT_UNTRUSTED') {
