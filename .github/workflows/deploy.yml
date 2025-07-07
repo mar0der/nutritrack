@@ -92,11 +92,6 @@ jobs:
         export GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}"
         export JWT_SECRET="${{ secrets.JWT_SECRET }}"
         
-        # Set OAuth credentials (hardcoded until GitHub secrets are fixed)
-        export GOOGLE_CLIENT_ID="1035382330796-61mjs4fsv3c35gkhenjhiq81lp0n13jt.apps.googleusercontent.com"
-        export GOOGLE_CLIENT_SECRET="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"
-        export JWT_SECRET="super-secret-jwt-key-for-production"
-        
         # Create .env file for docker-compose
         echo "DOMAIN_NAME=${DOMAIN_NAME}" > .env
         echo "DB_PASSWORD=${DB_PASSWORD}" >> .env
