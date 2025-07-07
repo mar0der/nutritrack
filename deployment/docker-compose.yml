@@ -1,5 +1,4 @@
 # Updated for proper password deployment
-version: '3.8'
 
 services:
   db:

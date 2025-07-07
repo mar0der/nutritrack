@@ -93,14 +93,14 @@ jobs:
         export JWT_SECRET="${{ secrets.JWT_SECRET }}"
         
         # Create .env file for docker-compose
-        cat > .env << EOF
+        cat > .env << 'ENVEOF'
         DOMAIN_NAME=${DOMAIN_NAME}
         DB_PASSWORD=${DB_PASSWORD}
         GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
         GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
         JWT_SECRET=${JWT_SECRET}
         VITE_API_URL=/api
-        EOF
+        ENVEOF
         
         # Set API URL based on domain configuration
         if [ -n "${{ secrets.DOMAIN_NAME }}" ]; then
