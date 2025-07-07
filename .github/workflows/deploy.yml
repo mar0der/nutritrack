@@ -94,13 +94,13 @@ jobs:
         
         # Create .env file for docker-compose
         cat > .env << ENVEOF
-        DOMAIN_NAME=${DOMAIN_NAME}
-        DB_PASSWORD=${DB_PASSWORD}
-        GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-        GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-        JWT_SECRET=${JWT_SECRET}
-        VITE_API_URL=/api
-        ENVEOF
+DOMAIN_NAME=${DOMAIN_NAME}
+DB_PASSWORD=${DB_PASSWORD}
+GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+JWT_SECRET=${JWT_SECRET}
+VITE_API_URL=/api
+ENVEOF
         
         # Debug: Show .env file contents (mask sensitive data)
         echo "🔍 .env file contents:"
