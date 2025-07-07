@@ -11,6 +11,7 @@ This is a full-stack nutrition tracking application that helps users maintain di
 ### 🚀 Latest Update: Complete authentication system deployed with user login/signup
 
 #### 🌐 Production Domain: https://nerdstips.com/ with Let's Encrypt SSL
+#### 🔧 Google OAuth: Environment variables updated in GitHub secrets
 
 ### 📁 Screenshots Location
 Screenshots for debugging are stored in `/screenshots/` folder at project root.
