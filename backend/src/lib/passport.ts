@@ -11,7 +11,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-i
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 const callbackURL = process.env.NODE_ENV === 'production' 
-  ? 'https://nutritrackapi.duckdns.org/api/auth/google/callback'
+  ? `${process.env.FRONTEND_URL || 'https://nerdstips.com'}/api/auth/google/callback`
   : 'http://localhost:3001/api/auth/google/callback';
 
 if (googleClientId && googleClientSecret) {
