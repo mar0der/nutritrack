@@ -111,7 +111,7 @@ export default function Layout({ children }: LayoutProps) {
                     Sign in
                   </Link>
                   {/* Debug indicator - remove after testing */}
-                  {process.env.NODE_ENV === 'development' && (
+                  {import.meta.env.DEV && (
                     <span className="text-xs text-gray-500">
                       Auth: {isAuthenticated ? 'Y' : 'N'}
                     </span>
