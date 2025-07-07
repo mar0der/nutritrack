@@ -1,7 +1,8 @@
 import { type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Bars3Icon, XMarkIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon, SparklesIcon, UserIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
+import { useAuthStore } from '../stores/authStore';
 
 interface LayoutProps {
   children: ReactNode;
@@ -17,7 +18,9 @@ const navigation = [
 
 export default function Layout({ children }: LayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const location = useLocation();
+  const { user, isAuthenticated, logout } = useAuthStore();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -60,20 +63,77 @@ export default function Layout({ children }: LayoutProps) {
               </div>
             </div>
 
-            {/* Mobile menu button */}
-            <div className="md:hidden flex items-center">
-              <button
-                type="button"
-                className="inline-flex items-center justify-center p-2 rounded-lg text-gray-500 hover:text-primary-600 hover:bg-primary-50 transition-colors duration-200"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              >
-                <span className="sr-only">Open main menu</span>
-                {mobileMenuOpen ? (
-                  <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
-                ) : (
-                  <Bars3Icon className="block h-6 w-6" aria-hidden="true" />
-                )}
-              </button>
+            {/* User menu and mobile menu button */}
+            <div className="flex items-center space-x-4">
+              {/* User menu */}
+              {isAuthenticated && user ? (
+                <div className="relative">
+                  <button
+                    type="button"
+                    className="flex items-center space-x-2 p-2 rounded-lg text-gray-600 hover:text-primary-600 hover:bg-primary-50 transition-colors duration-200"
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  >
+                    {user?.avatar ? (
+                      <img
+                        className="h-8 w-8 rounded-full"
+                        src={user.avatar}
+                        alt={user.name}
+                      />
+                    ) : (
+                      <UserIcon className="h-6 w-6" />
+                    )}
+                    <span className="hidden md:block text-sm font-medium">{user?.name}</span>
+                  </button>
+                  
+                  {userMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                      <div className="py-1">
+                        <div className="px-4 py-2 text-sm text-gray-900 border-b border-gray-100">
+                          <div className="font-medium">{user?.name}</div>
+                          <div className="text-gray-500">{user?.email}</div>
+                        </div>
+                        <button
+                          onClick={logout}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Sign out
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <Link
+                    to="/login"
+                    className="bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors duration-200"
+                  >
+                    Sign in
+                  </Link>
+                  {/* Debug indicator - remove after testing */}
+                  {process.env.NODE_ENV === 'development' && (
+                    <span className="text-xs text-gray-500">
+                      Auth: {isAuthenticated ? 'Y' : 'N'}
+                    </span>
+                  )}
+                </div>
+              )}
+              
+              {/* Mobile menu button */}
+              <div className="md:hidden">
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center p-2 rounded-lg text-gray-500 hover:text-primary-600 hover:bg-primary-50 transition-colors duration-200"
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                >
+                  <span className="sr-only">Open main menu</span>
+                  {mobileMenuOpen ? (
+                    <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
+                  ) : (
+                    <Bars3Icon className="block h-6 w-6" aria-hidden="true" />
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
