@@ -11,7 +11,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-i
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 const callbackURL = process.env.NODE_ENV === 'production' 
-  ? `https://nerdstips.com/api/auth/google/callback`
+  ? `https://api.nerdstips.com/v1/auth/google/callback`
   : 'http://localhost:3001/api/auth/google/callback';
 
 if (googleClientId && googleClientSecret) {
