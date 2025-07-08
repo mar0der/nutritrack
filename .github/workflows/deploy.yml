@@ -62,6 +62,33 @@ jobs:
         echo "DEBUG: .env file created:"
         cat .env
         
+        # Copy production docker-compose to main file
+        echo "Setting up Docker Compose configuration..."
+        cp docker-compose-prod.yml docker-compose.yml
+        
+        # Make scripts executable
+        chmod +x *.sh || true
+        
+        # Run server setup scripts
+        echo "Running server setup scripts..."
+        if [ -f "generate-ssl.sh" ]; then
+          echo "Generating SSL certificates..."
+          ./generate-ssl.sh
+        fi
+        
+        if [ -f "generate-nginx-config.sh" ]; then
+          echo "Generating Nginx configuration..."
+          ./generate-nginx-config.sh
+        fi
+        
+        # Stop existing containers
+        echo "Stopping existing containers..."
+        docker compose down || true
+        
+        # Build and start services
+        echo "Building and starting Docker services..."
+        docker compose up -d --build
+        
         echo "Deployment completed successfully!"
         
         EOF
