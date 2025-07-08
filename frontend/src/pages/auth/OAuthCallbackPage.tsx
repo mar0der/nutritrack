@@ -20,10 +20,12 @@ export const OAuthCallbackPage: React.FC = () => {
 
       if (token) {
         // Set token and fetch user data
+        console.log('🔐 OAuth callback: Token received:', token.substring(0, 20) + '...');
         setUser(null, token);
         await initializeAuth();
         navigate('/');
       } else {
+        console.error('🔐 OAuth callback: No token in URL');
         navigate('/login?error=no_token');
       }
     };
