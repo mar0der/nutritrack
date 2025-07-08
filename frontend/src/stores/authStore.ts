@@ -36,33 +36,25 @@ export const useAuthStore = create<AuthState>()(
 
       initializeAuth: async () => {
         const { token } = get();
-        console.log('🔐 Auth initialization - Token exists:', !!token);
         
         if (!token) {
-          console.log('🔐 No token found, setting not authenticated');
           set({ isLoading: false, isAuthenticated: false });
           return;
         }
 
         set({ isLoading: true });
         try {
-          console.log('🔐 Validating token with /auth/me...');
           api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           const response = await api.get('/auth/me');
           const user = response.data;
-          console.log('🔐 Token validation successful for user:', user.email);
-          console.log('🔐 Setting user and authenticated state');
           set({ user, isAuthenticated: true });
           setAuthToken(token); // Ensure main API client also has the token
-          console.log('🔐 Auth initialization completed successfully');
         } catch (error: any) {
-          console.error('🔐 Auth initialization failed:', error.response?.status, error.response?.data);
-          console.error('🔐 Full error object:', error);
+          console.error('Auth initialization failed:', error.response?.status, error.response?.data);
           // Clear invalid token
           get().setUser(null, null);
           // Only redirect if we're not already on an auth page
           if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/signup')) {
-            console.log('🔐 Redirecting to login due to invalid token');
             window.location.href = '/login';
           }
         } finally {
@@ -80,7 +72,6 @@ export const useAuthStore = create<AuthState>()(
           
           const { user, token } = response.data;
           get().setUser(user, token);
-          console.log('✅ Login successful for:', user.email);
         } catch (error: any) {
           console.error('Login failed:', error);
           throw new Error(error.response?.data?.error || 'Login failed');

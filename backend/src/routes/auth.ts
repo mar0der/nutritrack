@@ -174,10 +174,8 @@ router.get('/google/callback',
   async (req: any, res: any) => {
     try {
       const user = req.user as any;
-      console.log('🔐 OAuth callback - User received:', user ? user.email : 'null');
       
       if (!user) {
-        console.log('🔐 OAuth callback - No user, redirecting to login');
         return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=oauth_failed`);
       }
 
@@ -187,7 +185,6 @@ router.get('/google/callback',
         email: user.email,
         name: user.name
       });
-      console.log('🔐 OAuth callback - Token generated:', token.substring(0, 20) + '...');
 
       // Create session record
       const expiresAt = new Date();
@@ -203,9 +200,7 @@ router.get('/google/callback',
 
       // Redirect to frontend with token
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-      const redirectUrl = `${frontendUrl}/auth/callback?token=${token}`;
-      console.log('🔐 OAuth callback - Redirecting to:', redirectUrl);
-      res.redirect(redirectUrl);
+      res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
     } catch (error) {
       console.error('Google OAuth callback error:', error);
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';

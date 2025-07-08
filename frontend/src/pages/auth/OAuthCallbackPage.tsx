@@ -11,11 +11,6 @@ export const OAuthCallbackPage: React.FC = () => {
     const handleCallback = async () => {
       const token = searchParams.get('token');
       const error = searchParams.get('error');
-      
-      console.log('🔐 OAuth callback page - Current URL:', window.location.href);
-      console.log('🔐 OAuth callback page - SearchParams:', Object.fromEntries(searchParams));
-      console.log('🔐 OAuth callback page - Token:', token ? token.substring(0, 20) + '...' : 'null');
-      console.log('🔐 OAuth callback page - Error:', error);
 
       if (error) {
         console.error('OAuth error:', error);
@@ -25,15 +20,11 @@ export const OAuthCallbackPage: React.FC = () => {
 
       if (token) {
         // Set token and fetch user data
-        console.log('🔐 OAuth callback: Token received:', token.substring(0, 20) + '...');
-        console.log('🔐 OAuth callback: Setting token in store');
         setUser(null, token);
-        console.log('🔐 OAuth callback: Calling initializeAuth');
         await initializeAuth();
-        console.log('🔐 OAuth callback: initializeAuth completed, navigating to /');
         navigate('/');
       } else {
-        console.error('🔐 OAuth callback: No token in URL');
+        console.error('OAuth callback: No token in URL');
         navigate('/login?error=no_token');
       }
     };
