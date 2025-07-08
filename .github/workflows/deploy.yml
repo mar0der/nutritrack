@@ -47,3 +47,26 @@ jobs:
         echo "SSH directory contents:"
         ls -la ~/.ssh/ || echo "SSH directory not found"
         echo "Test completed successfully!"
+        
+    - name: Connect to server and run commands
+      run: |
+        echo "Step 3: Connecting to server..."
+        ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+        echo "Connected to server successfully!"
+        echo "Server hostname: $(hostname)"
+        echo "Server user: $(whoami)"
+        echo "Server date: $(date)"
+        
+        # Create test file on server
+        echo "Creating test file on server..."
+        echo "test_from_github_actions" > /tmp/server_test.txt
+        cat /tmp/server_test.txt
+        
+        # Create nutritrack directory
+        echo "Creating nutritrack directory..."
+        sudo mkdir -p /var/www/nutritrack
+        sudo chown $USER:$USER /var/www/nutritrack
+        echo "Directory created: /var/www/nutritrack"
+        ls -la /var/www/
+        
+        EOF
