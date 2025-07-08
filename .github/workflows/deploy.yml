@@ -84,21 +84,17 @@ jobs:
             docker rm nginx-temp 2>/dev/null || true
             
             # Create temporary nginx config for ACME challenge
-            cat > /tmp/nginx-acme.conf << 'EOF'
-server {
-    listen 80;
-    server_name _;
-    
-    location /.well-known/acme-challenge/ {
-        root /var/www/certbot;
-    }
-    
-    location / {
-        return 200 'ACME Challenge Server Ready';
-        add_header Content-Type text/plain;
-    }
-}
-EOF
+            echo 'server {
+                listen 80;
+                server_name _;
+                location /.well-known/acme-challenge/ {
+                    root /var/www/certbot;
+                }
+                location / {
+                    return 200 "ACME Challenge Server Ready";
+                    add_header Content-Type text/plain;
+                }
+            }' > /tmp/nginx-acme.conf
             
             # Start temporary nginx for ACME challenge
             echo "Starting temporary nginx for domain validation..."
