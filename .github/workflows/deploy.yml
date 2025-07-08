@@ -68,13 +68,13 @@ jobs:
         # Generate SSL certificates (ZeroSSL or self-signed fallback)
         echo "🔒 Setting up SSL certificates..."
         if [ -n "$DOMAIN_NAME" ]; then
-          echo "🌐 Using ZeroSSL for domain: $DOMAIN_NAME"
+          echo "🌐 Using Buypass for domain: $DOMAIN_NAME"
           
           # Check if SSL certificates already exist (preserved from previous deployments)
           if [ -f "/etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem" ]; then
             echo "✅ SSL certificates found in /etc/letsencrypt, using existing certificates"
           else
-            echo "🔧 Generating new ZeroSSL certificates..."
+            echo "🔧 Generating new Buypass certificates..."
             # Create webroot directory for ACME challenge
             sudo mkdir -p /var/www/certbot
             
@@ -87,8 +87,8 @@ jobs:
             echo "Starting temporary nginx for domain validation..."
             docker run -d --name nginx-temp -p 80:80 -v /var/www/certbot:/var/www/certbot nginx:alpine
             
-            # Run ZeroSSL certificate generation
-            docker run --rm -v /etc/letsencrypt:/etc/letsencrypt -v /var/www/certbot:/var/www/certbot certbot/certbot certonly --webroot --webroot-path=/var/www/certbot --email admin@$DOMAIN_NAME --agree-tos --no-eff-email --server https://acme.zerossl.com/v2/DV90 -d $DOMAIN_NAME --non-interactive
+            # Run Buypass certificate generation (no registration required)
+            docker run --rm -v /etc/letsencrypt:/etc/letsencrypt -v /var/www/certbot:/var/www/certbot certbot/certbot certonly --webroot --webroot-path=/var/www/certbot --email admin@$DOMAIN_NAME --agree-tos --no-eff-email --server https://api.buypass.com/acme/v02/directory -d $DOMAIN_NAME --non-interactive
             
             # Stop temporary nginx
             docker stop nginx-temp && docker rm nginx-temp
