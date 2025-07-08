@@ -10,6 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+    - name: Test before SSH
+      run: |
+        echo "Step 1: Before SSH setup"
+        echo "dummy_test_file" > /tmp/test_file.txt
+        cat /tmp/test_file.txt
+        
     - name: Create SSH key file
       run: |
         mkdir -p ~/.ssh
@@ -17,6 +23,9 @@ jobs:
         chmod 600 ~/.ssh/id_rsa
         ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
         
-    - name: Cleanup
+    - name: Test after SSH
       run: |
-        rm -f ~/.ssh/id_rsa
+        echo "Step 2: After SSH setup"
+        echo "SSH key file exists:" 
+        ls -la ~/.ssh/id_rsa || echo "SSH key file not found"
+        echo "Test completed successfully!"
