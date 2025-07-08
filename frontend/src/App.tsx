@@ -26,7 +26,10 @@ function App() {
   const { initializeAuth } = useAuthStore();
 
   useEffect(() => {
-    initializeAuth();
+    // Don't initialize auth on OAuth callback page - let the callback handle it
+    if (!window.location.pathname.includes('/auth/callback')) {
+      initializeAuth();
+    }
   }, [initializeAuth]);
 
   return (

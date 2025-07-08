@@ -51,10 +51,13 @@ export const useAuthStore = create<AuthState>()(
           const response = await api.get('/auth/me');
           const user = response.data;
           console.log('🔐 Token validation successful for user:', user.email);
+          console.log('🔐 Setting user and authenticated state');
           set({ user, isAuthenticated: true });
           setAuthToken(token); // Ensure main API client also has the token
+          console.log('🔐 Auth initialization completed successfully');
         } catch (error: any) {
           console.error('🔐 Auth initialization failed:', error.response?.status, error.response?.data);
+          console.error('🔐 Full error object:', error);
           // Clear invalid token
           get().setUser(null, null);
           // Only redirect if we're not already on an auth page

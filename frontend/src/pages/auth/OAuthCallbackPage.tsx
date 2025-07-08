@@ -26,8 +26,11 @@ export const OAuthCallbackPage: React.FC = () => {
       if (token) {
         // Set token and fetch user data
         console.log('🔐 OAuth callback: Token received:', token.substring(0, 20) + '...');
+        console.log('🔐 OAuth callback: Setting token in store');
         setUser(null, token);
+        console.log('🔐 OAuth callback: Calling initializeAuth');
         await initializeAuth();
+        console.log('🔐 OAuth callback: initializeAuth completed, navigating to /');
         navigate('/');
       } else {
         console.error('🔐 OAuth callback: No token in URL');
