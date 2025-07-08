@@ -135,6 +135,9 @@ jobs:
         echo "Waiting for database to be ready..."
         sleep 30
         
+        # Debug: Check if containers can see environment variables
+        echo "DEBUG: Checking environment variables in containers..."
+        
         # Run database migrations
         docker compose exec -T api npx prisma migrate deploy || true
         
