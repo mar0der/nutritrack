@@ -83,9 +83,26 @@ jobs:
             docker stop nginx-temp 2>/dev/null || true
             docker rm nginx-temp 2>/dev/null || true
             
+            # Create temporary nginx config for ACME challenge
+            cat > /tmp/nginx-acme.conf << 'EOF'
+server {
+    listen 80;
+    server_name _;
+    
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+    
+    location / {
+        return 200 'ACME Challenge Server Ready';
+        add_header Content-Type text/plain;
+    }
+}
+EOF
+            
             # Start temporary nginx for ACME challenge
             echo "Starting temporary nginx for domain validation..."
-            docker run -d --name nginx-temp -p 80:80 -v /var/www/certbot:/var/www/certbot nginx:alpine
+            docker run -d --name nginx-temp -p 80:80 -v /var/www/certbot:/var/www/certbot -v /tmp/nginx-acme.conf:/etc/nginx/conf.d/default.conf nginx:alpine
             
             # Run Buypass certificate generation (no registration required)
             docker run --rm -v /etc/letsencrypt:/etc/letsencrypt -v /var/www/certbot:/var/www/certbot certbot/certbot certonly --webroot --webroot-path=/var/www/certbot --email admin@$DOMAIN_NAME --agree-tos --no-eff-email --server https://api.buypass.com/acme/directory -d $DOMAIN_NAME --non-interactive
