@@ -69,19 +69,15 @@ jobs:
             ./docker-letsencrypt-setup.sh ${{ secrets.DOMAIN_NAME }} admin@${{ secrets.DOMAIN_NAME }}
           fi
           
-          # Use production docker-compose with Let's Encrypt
-          if [ -f "docker-compose-production.yml" ]; then
-            echo "📋 Using production Docker Compose configuration"
-            cp docker-compose-production.yml docker-compose.yml
-          else
-            echo "⚠️ Production config not found, creating it..."
-            export DOMAIN_NAME="${{ secrets.DOMAIN_NAME }}"
-            ./generate-nginx-config.sh
-            cp docker-compose.prod.yml docker-compose.yml
-          fi
+          # Use production docker-compose configuration
+          echo "📋 Using production Docker Compose configuration"
+          cp docker-compose-prod.yml docker-compose.yml
+          export DOMAIN_NAME="${{ secrets.DOMAIN_NAME }}"
+          ./generate-nginx-config.sh
         else
           echo "🔒 Using self-signed certificates (no domain configured)"
           ./generate-ssl.sh
+          cp docker-compose-prod.yml docker-compose.yml
         fi
         
         # Stop existing containers (but preserve volumes)
