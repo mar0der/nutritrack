@@ -10,63 +10,36 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Debug workflow execution
-      run: |
-        echo "=== WORKFLOW DEBUG START ==="
-        echo "Current working directory: $(pwd)"
-        echo "Current user: $(whoami)"
-        echo "Current date/time: $(date)"
-        echo "Environment variables:"
-        env | sort
-        echo "=== WORKFLOW DEBUG END ==="
-        
-    - name: Test before SSH
-      run: |
-        echo "Step 1: Before SSH setup"
-        echo "dummy_test_file" > /tmp/test_file.txt
-        cat /tmp/test_file.txt
-        echo "Test file created at: /tmp/test_file.txt"
-        
     - name: Create SSH key file
       run: |
-        echo "Creating SSH key file..."
         mkdir -p ~/.ssh
-        echo "SSH directory created"
         echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
-        echo "SSH key written to file"
         chmod 600 ~/.ssh/id_rsa
-        echo "SSH key permissions set"
         ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
-        echo "SSH host key added to known_hosts"
         
-    - name: Test after SSH
+    - name: Deploy to server
       run: |
-        echo "Step 2: After SSH setup"
-        echo "SSH key file exists:" 
-        ls -la ~/.ssh/id_rsa || echo "SSH key file not found"
-        echo "SSH directory contents:"
-        ls -la ~/.ssh/ || echo "SSH directory not found"
-        echo "Test completed successfully!"
-        
-    - name: Connect to server and run commands
-      run: |
-        echo "Step 3: Connecting to server..."
         ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-        echo "Connected to server successfully!"
-        echo "Server hostname: $(hostname)"
-        echo "Server user: $(whoami)"
-        echo "Server date: $(date)"
         
-        # Create test file on server
-        echo "Creating test file on server..."
-        echo "test_from_github_actions" > /tmp/server_test.txt
-        cat /tmp/server_test.txt
+        # Delete existing nutritrack folder if it exists
+        echo "Cleaning up existing nutritrack folder..."
+        sudo rm -rf /var/www/nutritrack
         
-        # Create nutritrack directory
-        echo "Creating nutritrack directory..."
+        # Create app directory
         sudo mkdir -p /var/www/nutritrack
         sudo chown $USER:$USER /var/www/nutritrack
-        echo "Directory created: /var/www/nutritrack"
-        ls -la /var/www/
+        
+        # Navigate to app directory
+        cd /var/www/nutritrack
+        
+        # Clone repository
+        echo "Cloning repository..."
+        git clone https://github.com/mar0der/nutritrack.git .
+        
+        echo "Deployment completed successfully!"
         
         EOF
+        
+    - name: Cleanup
+      run: |
+        rm -f ~/.ssh/id_rsa
