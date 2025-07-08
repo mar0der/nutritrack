@@ -5,7 +5,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 NutriTrack is a full-stack nutrition tracking application designed to help users maintain dietary variety by tracking ingredients and providing smart dish recommendations to promote a balanced diet. The application features a separated frontend and backend architecture, enabling scalability and compatibility with future mobile applications. The core functionality includes tracking ingredients and providing smart dish recommendations. The application is currently fully functional, with a complete authentication system and production deployment.
 
-**Frontend rebuild needed: Fix OAuth URL routing to use v1 API endpoint.**
+## Completed OAuth Setup Tasks
+- ✅ Fixed GitHub Actions secrets naming (_PROD suffix)
+- ✅ Resolved SSH HEREDOC environment variable issues
+- ✅ Configured API subdomain (api.nerdstips.com/v1)
+- ✅ Generated SSL certificates for all domains (Buypass CA)
+- ✅ Fixed frontend/backend API endpoint routing (/api vs /v1)
+- ✅ Resolved CORS duplicate headers (removed Nginx CORS, kept Express CORS)
+- ✅ Fixed OAuth race condition (App.tsx vs callback page initializeAuth)
+- ✅ Removed debug logging messages
+- ✅ OAuth flow working: nerdstips.com → api.nerdstips.com/v1 → Google → callback → home
 
 ## Commands
 
@@ -125,13 +134,16 @@ The recommendation system calculates a "freshness score" for each dish:
 
 ## Production Deployment
 - **Domain**: nerdstips.com (production), localhost (development)
+- **API Subdomain**: api.nerdstips.com/v1 (production API endpoint)
 - **Server IP**: 78.47.123.191
 - **Server Path**: /var/www/nutritrack
-- **SSL**: Let's Encrypt for HTTPS
+- **SSL**: Buypass certificates for nerdstips.com, www.nerdstips.com, api.nerdstips.com
 - **CI/CD**: GitHub Actions with automated deployment
 - **Repository**: https://github.com/mar0der/nutritrack.git
 - **Access**: Root server access available for deployment verification
 - **Deployment Config**: Uses deployment/ folder with Docker Compose, Nginx, and SSL setup
+- **OAuth URLs**: Google Console redirect URI: https://api.nerdstips.com/v1/auth/google/callback | Authorized origins: https://nerdstips.com, https://www.nerdstips.com
+- **Environment Variables**: VITE_API_URL=https://api.nerdstips.com/v1 | GitHub secrets: GOOGLE_CLIENT_ID_PROD, GOOGLE_CLIENT_SECRET_PROD | FRONTEND_URL=https://nerdstips.com
 
 ### Docker Compose Configuration
 - **Development**: `deployment/docker-compose-dev.yml` - includes all services with development settings
@@ -155,6 +167,9 @@ The recommendation system calculates a "freshness score" for each dish:
 - ✅ JWT authentication system implemented
 - ✅ User registration and login functionality
 - ✅ Secured API endpoints with middleware
+- ✅ Google OAuth integration with API subdomain
+- ✅ CORS configuration fixed (Express handles CORS, not Nginx)
+- ✅ OAuth race condition resolved (App.tsx doesn't call initializeAuth on callback page)
 - 🔄 Password reset functionality (pending)
 - 🔄 Role-based access control (pending)
 
