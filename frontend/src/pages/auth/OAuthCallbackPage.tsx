@@ -11,6 +11,11 @@ export const OAuthCallbackPage: React.FC = () => {
     const handleCallback = async () => {
       const token = searchParams.get('token');
       const error = searchParams.get('error');
+      
+      console.log('🔐 OAuth callback page - Current URL:', window.location.href);
+      console.log('🔐 OAuth callback page - SearchParams:', Object.fromEntries(searchParams));
+      console.log('🔐 OAuth callback page - Token:', token ? token.substring(0, 20) + '...' : 'null');
+      console.log('🔐 OAuth callback page - Error:', error);
 
       if (error) {
         console.error('OAuth error:', error);
