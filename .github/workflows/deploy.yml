@@ -65,18 +65,28 @@ jobs:
         # Make scripts executable
         chmod +x *.sh || true
         
-        # Generate SSL certificates (Let's Encrypt or self-signed fallback)
+        # Generate SSL certificates (ZeroSSL or self-signed fallback)
         echo "🔒 Setting up SSL certificates..."
         if [ -n "$DOMAIN_NAME" ]; then
-          echo "🌐 Using Let's Encrypt for domain: $DOMAIN_NAME"
+          echo "🌐 Using ZeroSSL for domain: $DOMAIN_NAME"
           
-          # Check if Let's Encrypt certificates already exist
-          if [ -f "letsencrypt/live/$DOMAIN_NAME/fullchain.pem" ]; then
-            echo "✅ Let's Encrypt certificates found, using existing certificates"
+          # Check if SSL certificates already exist (preserved from previous deployments)
+          if [ -f "/etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem" ]; then
+            echo "✅ SSL certificates found in /etc/letsencrypt, using existing certificates"
           else
-            echo "🔧 Generating new Let's Encrypt certificates..."
-            # Run Docker-based Let's Encrypt setup
-            ./docker-letsencrypt-setup.sh $DOMAIN_NAME admin@$DOMAIN_NAME
+            echo "🔧 Generating new ZeroSSL certificates..."
+            # Create webroot directory for ACME challenge
+            sudo mkdir -p /var/www/certbot
+            
+            # Start temporary nginx for ACME challenge
+            echo "Starting temporary nginx for domain validation..."
+            docker run -d --name nginx-temp -p 80:80 -v /var/www/certbot:/var/www/certbot nginx:alpine
+            
+            # Run ZeroSSL certificate generation
+            docker run --rm -v /etc/letsencrypt:/etc/letsencrypt -v /var/www/certbot:/var/www/certbot certbot/certbot certonly --webroot --webroot-path=/var/www/certbot --email admin@$DOMAIN_NAME --agree-tos --no-eff-email --server https://acme.zerossl.com/v2/DV90 -d $DOMAIN_NAME --non-interactive
+            
+            # Stop temporary nginx
+            docker stop nginx-temp && docker rm nginx-temp
           fi
           
           # Use production docker-compose configuration
