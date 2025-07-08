@@ -160,7 +160,7 @@ router.post('/login', async (req: any, res: any) => {
 // Google OAuth routes
 router.get('/google', (req: any, res: any, next: any) => {
   // Check if Google strategy is available
-  if (!passport._strategy('google')) {
+  if (!(passport as any)._strategy('google')) {
     return res.status(500).json({ 
       error: 'Google OAuth not configured', 
       details: 'Google OAuth strategy not initialized' 
