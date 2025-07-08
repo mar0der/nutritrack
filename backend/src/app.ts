@@ -13,7 +13,7 @@ const app = express();
 app.use(helmet());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://nerdstips.com', 'http://nerdstips.com']
+    ? ['https://nerdstips.com', 'https://www.nerdstips.com', 'https://api.nerdstips.com', 'http://nerdstips.com']
     : ['http://localhost:5173', 'http://localhost:3000'],
   credentials: true
 }));
@@ -36,6 +36,7 @@ app.get('/health', (req, res) => {
 // API routes
 import apiRoutes from './routes';
 app.use('/api', apiRoutes);
+app.use('/v1', apiRoutes); // Add v1 prefix for api subdomain
 
 // Error handling middleware
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {

@@ -16,9 +16,9 @@ export const getApiUrl = (): string => {
     return envUrl;
   }
   
-  // In production or HTTPS environments, use relative path
+  // In production or HTTPS environments, use API subdomain
   if (isProduction() || isHttps()) {
-    return '/api';
+    return 'https://api.nerdstips.com/v1';
   }
   
   // Development fallback
