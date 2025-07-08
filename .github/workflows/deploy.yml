@@ -30,14 +30,17 @@ jobs:
         ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
         
     - name: Deploy to server
+      env:
+        DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID_PROD }}
+        GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET_PROD }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        SERVER_HOST: ${{ secrets.SERVER_HOST }}
       run: |
         ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-        "DOMAIN_NAME='${{ secrets.DOMAIN_NAME }}' \
-         DB_PASSWORD='${{ secrets.DB_PASSWORD }}' \
-         GOOGLE_CLIENT_ID='${{ secrets.GOOGLE_CLIENT_ID_PROD }}' \
-         GOOGLE_CLIENT_SECRET='${{ secrets.GOOGLE_CLIENT_SECRET_PROD }}' \
-         JWT_SECRET='${{ secrets.JWT_SECRET }}' \
-         SERVER_HOST='${{ secrets.SERVER_HOST }}'" << 'EOF'
+          "DOMAIN_NAME='$DOMAIN_NAME' DB_PASSWORD='$DB_PASSWORD' GOOGLE_CLIENT_ID='$GOOGLE_CLIENT_ID' GOOGLE_CLIENT_SECRET='$GOOGLE_CLIENT_SECRET' JWT_SECRET='$JWT_SECRET' SERVER_HOST='$SERVER_HOST'" \
+          bash << 'EOF'
         
         # Create app directory if it doesn't exist
         sudo mkdir -p /var/www/nutritrack
