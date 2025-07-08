@@ -18,8 +18,16 @@ jobs:
         ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
         
     - name: Deploy to server
+      env:
+        DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID_PROD }}
+        GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET_PROD }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
       run: |
-        ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+        ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+          "DOMAIN_NAME='$DOMAIN_NAME' DB_PASSWORD='$DB_PASSWORD' GOOGLE_CLIENT_ID='$GOOGLE_CLIENT_ID' GOOGLE_CLIENT_SECRET='$GOOGLE_CLIENT_SECRET' JWT_SECRET='$JWT_SECRET'" \
+          bash << 'EOF'
         
         # Delete existing nutritrack folder if it exists
         echo "Cleaning up existing nutritrack folder..."
@@ -39,14 +47,14 @@ jobs:
         # Navigate to deployment directory
         cd deployment
         
-        # Create .env file with dummy data
-        echo "Creating .env file with dummy data..."
+        # Create .env file with GitHub secrets
+        echo "Creating .env file with GitHub secrets..."
         {
-          echo "DOMAIN_NAME=nerdstips.com"
-          echo "DB_PASSWORD=test_db_password"
-          echo "GOOGLE_CLIENT_ID=test_google_client_id"
-          echo "GOOGLE_CLIENT_SECRET=test_google_client_secret"
-          echo "JWT_SECRET=test_jwt_secret_hardcoded"
+          echo "DOMAIN_NAME=$DOMAIN_NAME"
+          echo "DB_PASSWORD=$DB_PASSWORD"
+          echo "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID"
+          echo "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET"
+          echo "JWT_SECRET=$JWT_SECRET"
           echo "VITE_API_URL=/api"
         } > .env
         
