@@ -176,7 +176,14 @@ router.get('/google/callback',
       const user = req.user as any;
       
       if (!user) {
-        return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=oauth_failed`);
+        // Check if this is a mobile request for error handling
+        const isMobile = req.query.mobile === 'true' || req.headers['user-agent']?.includes('nutritrack-mobile');
+        
+        if (isMobile) {
+          return res.redirect('nutritrack://auth/callback?error=oauth_failed');
+        } else {
+          return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=oauth_failed`);
+        }
       }
 
       // Generate JWT token
@@ -198,13 +205,29 @@ router.get('/google/callback',
         }
       });
 
-      // Redirect to frontend with token
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-      res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
+      // Check if this is a mobile request
+      const isMobile = req.query.mobile === 'true' || req.headers['user-agent']?.includes('nutritrack-mobile');
+      
+      if (isMobile) {
+        // Redirect to mobile app with custom URL scheme
+        res.redirect(`nutritrack://auth/callback?token=${token}`);
+      } else {
+        // Redirect to web frontend
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
+      }
     } catch (error) {
       console.error('Google OAuth callback error:', error);
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-      res.redirect(`${frontendUrl}/login?error=oauth_failed`);
+      
+      // Check if this is a mobile request for error handling
+      const isMobile = req.query.mobile === 'true' || req.headers['user-agent']?.includes('nutritrack-mobile');
+      
+      if (isMobile) {
+        res.redirect('nutritrack://auth/callback?error=oauth_failed');
+      } else {
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        res.redirect(`${frontendUrl}/login?error=oauth_failed`);
+      }
     }
   }
 );

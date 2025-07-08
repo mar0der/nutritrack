@@ -128,9 +128,17 @@ The recommendation system calculates a "freshness score" for each dish:
 
 ## Authentication Flow
 1. Email/password registration with bcrypt hashing
-2. Google OAuth integration via Passport.js
+2. Google OAuth integration via Passport.js with mobile app support
 3. JWT tokens for session management
 4. Protected routes on both frontend and backend
+
+### Mobile OAuth Support
+The backend automatically detects mobile OAuth requests and redirects accordingly:
+- **Web OAuth**: Redirects to `https://nerdstips.com/auth/callback?token=JWT_TOKEN`
+- **Mobile OAuth**: Redirects to `nutritrack://auth/callback?token=JWT_TOKEN`
+- **Detection Methods**: 
+  - Query parameter: `?mobile=true`
+  - User-Agent header containing: `nutritrack-mobile`
 
 ## Production Deployment
 - **Domain**: nerdstips.com (production), localhost (development)
