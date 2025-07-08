@@ -1,0 +1,181 @@
+name: Deploy NutriTrack to Ubuntu Server
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID_PROD }}
+      GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET_PROD }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        
+    - name: Create SSH key file
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+        
+    - name: Deploy to server
+      env:
+        DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID_PROD }}
+        GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET_PROD }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        SERVER_HOST: ${{ secrets.SERVER_HOST }}
+      run: |
+        ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+          "DOMAIN_NAME='$DOMAIN_NAME' DB_PASSWORD='$DB_PASSWORD' GOOGLE_CLIENT_ID='$GOOGLE_CLIENT_ID' GOOGLE_CLIENT_SECRET='$GOOGLE_CLIENT_SECRET' JWT_SECRET='$JWT_SECRET' SERVER_HOST='$SERVER_HOST'" \
+          bash << 'EOF'
+        
+        # Create app directory if it doesn't exist
+        sudo mkdir -p /var/www/nutritrack
+        sudo chown $USER:$USER /var/www/nutritrack
+        
+        # Navigate to app directory
+        cd /var/www/nutritrack
+        
+        # Clone or pull latest code
+        if [ -d ".git" ]; then
+          echo "Pulling latest changes..."
+          git pull origin main
+        else
+          echo "Cloning repository..."
+          git clone https://github.com/mar0der/nutritrack.git .
+        fi
+        
+        # Navigate to deployment directory
+        cd deployment
+        
+        # Make scripts executable
+        chmod +x *.sh || true
+        
+        # Generate SSL certificates (Let's Encrypt or self-signed fallback)
+        echo "🔒 Setting up SSL certificates..."
+        if [ -n "$DOMAIN_NAME" ]; then
+          echo "🌐 Using Let's Encrypt for domain: $DOMAIN_NAME"
+          
+          # Check if Let's Encrypt certificates already exist
+          if [ -f "letsencrypt/live/$DOMAIN_NAME/fullchain.pem" ]; then
+            echo "✅ Let's Encrypt certificates found, using existing certificates"
+          else
+            echo "🔧 Generating new Let's Encrypt certificates..."
+            # Run Docker-based Let's Encrypt setup
+            ./docker-letsencrypt-setup.sh $DOMAIN_NAME admin@$DOMAIN_NAME
+          fi
+          
+          # Use production docker-compose configuration
+          echo "📋 Using production Docker Compose configuration"
+          cp docker-compose-prod.yml docker-compose.yml
+          export DOMAIN_NAME="$DOMAIN_NAME"
+          ./generate-nginx-config.sh
+        else
+          echo "🔒 Using self-signed certificates (no domain configured)"
+          ./generate-ssl.sh
+          cp docker-compose-prod.yml docker-compose.yml
+        fi
+        
+        # Stop existing containers (but preserve volumes)
+        docker compose down || true
+        
+        # Export environment variables for docker-compose
+        export DB_PASSWORD="$DB_PASSWORD"
+        export NODE_ENV=production
+        export PORT=3001
+        export DOMAIN_NAME="$DOMAIN_NAME"
+        export GOOGLE_CLIENT_ID="$GOOGLE_CLIENT_ID"
+        export GOOGLE_CLIENT_SECRET="$GOOGLE_CLIENT_SECRET"
+        export JWT_SECRET="$JWT_SECRET"
+        
+        # Create .env file for docker-compose (fully hardcoded values)
+        {
+          echo "DOMAIN_NAME=nerdstips.com"
+          echo "DB_PASSWORD=test_db_password"
+          echo "GOOGLE_CLIENT_ID=test_google_client_id"
+          echo "GOOGLE_CLIENT_SECRET=test_google_client_secret"
+          echo "JWT_SECRET=test_jwt_secret_hardcoded"
+          echo "VITE_API_URL=/api"
+        } > .env
+        
+        # Debug: Show .env file creation
+        echo "DEBUG: .env file created:"
+        cat .env
+        
+        
+        # Set API URL based on domain configuration
+        if [ -n "$DOMAIN_NAME" ]; then
+          export VITE_API_URL="https://$DOMAIN_NAME"
+        else
+          export VITE_API_URL="https://$SERVER_HOST"
+        fi
+        
+        # Build and start services with environment variables
+        docker compose up -d --build
+        
+        
+        # Ensure Let's Encrypt certificates are preserved
+        if [ -n "$DOMAIN_NAME" ] && [ -d "letsencrypt/live/$DOMAIN_NAME" ]; then
+          echo "✅ Let's Encrypt certificates preserved for $DOMAIN_NAME"
+          # Verify certificate validity
+          openssl x509 -in "letsencrypt/live/$DOMAIN_NAME/cert.pem" -text -noout | grep "Not After" || echo "Certificate check skipped"
+        fi
+        
+        # Wait for database to be ready
+        echo "Waiting for database to be ready..."
+        sleep 30
+        
+        # Debug: Check if containers can see environment variables
+        echo "DEBUG: Checking environment variables in containers..."
+        
+        # Run database migrations
+        docker compose exec -T api npx prisma migrate deploy || true
+        
+        # Seed database (only if empty)
+        echo "Seeding database with mock data..."
+        docker compose exec -T api npm run seed || echo "Database seeding skipped or failed"
+        
+        # Show running containers
+        docker compose ps
+        
+        # Show logs for debugging
+        docker compose logs --tail=50
+        
+        EOF
+        
+    - name: Verify deployment
+      run: |
+        echo "Checking if services are running..."
+        sleep 10
+        
+        # Determine the URL to test based on domain configuration
+        if [ -n "${{ secrets.DOMAIN_NAME }}" ]; then
+          TEST_URL="https://${{ secrets.DOMAIN_NAME }}"
+          echo "Testing domain: ${{ secrets.DOMAIN_NAME }}"
+        else
+          TEST_URL="https://${{ secrets.SERVER_HOST }}"
+          echo "Testing server IP: ${{ secrets.SERVER_HOST }}"
+        fi
+        
+        # Check if web service is accessible (HTTPS)
+        curl -f -k "$TEST_URL/" || echo "Frontend not yet accessible at $TEST_URL"
+        
+        # Check if API service is accessible (through HTTPS proxy)
+        curl -f -k "$TEST_URL/health" || echo "API not yet accessible at $TEST_URL"
+        
+    - name: Cleanup
+      run: |
+        rm -f ~/.ssh/id_rsa
