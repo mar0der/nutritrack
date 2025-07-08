@@ -9,8 +9,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-      GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID_PROD }}
+      GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET_PROD }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
     
     steps:
@@ -92,8 +92,8 @@ jobs:
         export NODE_ENV=production
         export PORT=3001
         export DOMAIN_NAME="${{ secrets.DOMAIN_NAME }}"
-        export GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}"
-        export GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}"
+        export GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID_PROD }}"
+        export GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET_PROD }}"
         export JWT_SECRET="${{ secrets.JWT_SECRET }}"
         
         # Create .env file for docker-compose
