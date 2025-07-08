@@ -78,6 +78,11 @@ jobs:
             # Create webroot directory for ACME challenge
             sudo mkdir -p /var/www/certbot
             
+            # Clean up any existing temporary nginx containers
+            echo "Cleaning up existing temporary containers..."
+            docker stop nginx-temp 2>/dev/null || true
+            docker rm nginx-temp 2>/dev/null || true
+            
             # Start temporary nginx for ACME challenge
             echo "Starting temporary nginx for domain validation..."
             docker run -d --name nginx-temp -p 80:80 -v /var/www/certbot:/var/www/certbot nginx:alpine
