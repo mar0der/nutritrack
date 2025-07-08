@@ -101,9 +101,9 @@ jobs:
         export GOOGLE_CLIENT_SECRET="$GOOGLE_CLIENT_SECRET"
         export JWT_SECRET="$JWT_SECRET"
         
-        # Create .env file for docker-compose (testing with one real variable)
+        # Create .env file for docker-compose (fully hardcoded values)
         {
-          echo "DOMAIN_NAME=$DOMAIN_NAME"
+          echo "DOMAIN_NAME=nerdstips.com"
           echo "DB_PASSWORD=test_db_password"
           echo "GOOGLE_CLIENT_ID=test_google_client_id"
           echo "GOOGLE_CLIENT_SECRET=test_google_client_secret"
