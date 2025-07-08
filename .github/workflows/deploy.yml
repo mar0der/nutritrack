@@ -31,7 +31,13 @@ jobs:
         
     - name: Deploy to server
       run: |
-        ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+        ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+        "DOMAIN_NAME='${{ secrets.DOMAIN_NAME }}' \
+         DB_PASSWORD='${{ secrets.DB_PASSWORD }}' \
+         GOOGLE_CLIENT_ID='${{ secrets.GOOGLE_CLIENT_ID_PROD }}' \
+         GOOGLE_CLIENT_SECRET='${{ secrets.GOOGLE_CLIENT_SECRET_PROD }}' \
+         JWT_SECRET='${{ secrets.JWT_SECRET }}' \
+         SERVER_HOST='${{ secrets.SERVER_HOST }}'" << 'EOF'
         
         # Create app directory if it doesn't exist
         sudo mkdir -p /var/www/nutritrack
@@ -57,22 +63,22 @@ jobs:
         
         # Generate SSL certificates (Let's Encrypt or self-signed fallback)
         echo "🔒 Setting up SSL certificates..."
-        if [ -n "${{ secrets.DOMAIN_NAME }}" ]; then
-          echo "🌐 Using Let's Encrypt for domain: ${{ secrets.DOMAIN_NAME }}"
+        if [ -n "$DOMAIN_NAME" ]; then
+          echo "🌐 Using Let's Encrypt for domain: $DOMAIN_NAME"
           
           # Check if Let's Encrypt certificates already exist
-          if [ -f "letsencrypt/live/${{ secrets.DOMAIN_NAME }}/fullchain.pem" ]; then
+          if [ -f "letsencrypt/live/$DOMAIN_NAME/fullchain.pem" ]; then
             echo "✅ Let's Encrypt certificates found, using existing certificates"
           else
             echo "🔧 Generating new Let's Encrypt certificates..."
             # Run Docker-based Let's Encrypt setup
-            ./docker-letsencrypt-setup.sh ${{ secrets.DOMAIN_NAME }} admin@${{ secrets.DOMAIN_NAME }}
+            ./docker-letsencrypt-setup.sh $DOMAIN_NAME admin@$DOMAIN_NAME
           fi
           
           # Use production docker-compose configuration
           echo "📋 Using production Docker Compose configuration"
           cp docker-compose-prod.yml docker-compose.yml
-          export DOMAIN_NAME="${{ secrets.DOMAIN_NAME }}"
+          export DOMAIN_NAME="$DOMAIN_NAME"
           ./generate-nginx-config.sh
         else
           echo "🔒 Using self-signed certificates (no domain configured)"
@@ -84,30 +90,30 @@ jobs:
         docker compose down || true
         
         # Export environment variables for docker-compose
-        export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
+        export DB_PASSWORD="$DB_PASSWORD"
         export NODE_ENV=production
         export PORT=3001
-        export DOMAIN_NAME="${{ secrets.DOMAIN_NAME }}"
-        export GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID_PROD }}"
-        export GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET_PROD }}"
-        export JWT_SECRET="${{ secrets.JWT_SECRET }}"
+        export DOMAIN_NAME="$DOMAIN_NAME"
+        export GOOGLE_CLIENT_ID="$GOOGLE_CLIENT_ID"
+        export GOOGLE_CLIENT_SECRET="$GOOGLE_CLIENT_SECRET"
+        export JWT_SECRET="$JWT_SECRET"
         
         # Create .env file for docker-compose
         {
-          echo "DOMAIN_NAME=${{ secrets.DOMAIN_NAME }}"
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}"
-          echo "GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}"
-          echo "GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}"
-          echo "JWT_SECRET=${JWT_SECRET}"
+          echo "DOMAIN_NAME=$DOMAIN_NAME"
+          echo "DB_PASSWORD=$DB_PASSWORD"
+          echo "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID"
+          echo "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET"
+          echo "JWT_SECRET=$JWT_SECRET"
           echo "VITE_API_URL=/api"
         } > .env
         
         
         # Set API URL based on domain configuration
-        if [ -n "${{ secrets.DOMAIN_NAME }}" ]; then
-          export VITE_API_URL="https://${{ secrets.DOMAIN_NAME }}"
+        if [ -n "$DOMAIN_NAME" ]; then
+          export VITE_API_URL="https://$DOMAIN_NAME"
         else
-          export VITE_API_URL="https://${{ secrets.SERVER_HOST }}"
+          export VITE_API_URL="https://$SERVER_HOST"
         fi
         
         # Build and start services with environment variables
@@ -115,10 +121,10 @@ jobs:
         
         
         # Ensure Let's Encrypt certificates are preserved
-        if [ -n "${{ secrets.DOMAIN_NAME }}" ] && [ -d "letsencrypt/live/${{ secrets.DOMAIN_NAME }}" ]; then
-          echo "✅ Let's Encrypt certificates preserved for ${{ secrets.DOMAIN_NAME }}"
+        if [ -n "$DOMAIN_NAME" ] && [ -d "letsencrypt/live/$DOMAIN_NAME" ]; then
+          echo "✅ Let's Encrypt certificates preserved for $DOMAIN_NAME"
           # Verify certificate validity
-          openssl x509 -in "letsencrypt/live/${{ secrets.DOMAIN_NAME }}/cert.pem" -text -noout | grep "Not After" || echo "Certificate check skipped"
+          openssl x509 -in "letsencrypt/live/$DOMAIN_NAME/cert.pem" -text -noout | grep "Not After" || echo "Certificate check skipped"
         fi
         
         # Wait for database to be ready
