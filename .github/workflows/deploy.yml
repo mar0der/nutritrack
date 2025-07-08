@@ -110,6 +110,10 @@ jobs:
           # Use production docker-compose configuration
           echo "📋 Using production Docker Compose configuration"
           cp docker-compose-prod.yml docker-compose.yml
+          
+          # Remove any existing nginx config directory and generate proper file
+          rm -rf nginx-production.conf
+          export DOMAIN_NAME="$DOMAIN_NAME"
           ./generate-nginx-config.sh
         else
           echo "🔒 Using self-signed certificates (no domain configured)"
