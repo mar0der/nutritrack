@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 NutriTrack is a full-stack nutrition tracking application designed to help users maintain dietary variety by tracking ingredients and providing smart dish recommendations to promote a balanced diet. The application features a separated frontend and backend architecture, enabling scalability and compatibility with future mobile applications. The core functionality includes tracking ingredients and providing smart dish recommendations. The application is currently fully functional, with a complete authentication system and production deployment.
 
-**Testing deployment mechanism with dummy data - v2.**
+**Full clean deployment test - all fixes automated.**
 
 ## Commands
 
