@@ -166,7 +166,17 @@ router.get('/google', (req: any, res: any, next: any) => {
       details: 'Google OAuth strategy not initialized' 
     });
   }
-  passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
+  
+  // Preserve mobile parameter using OAuth state
+  const isMobile = req.query.mobile === 'true' || req.headers['user-agent']?.includes('nutritrack-mobile');
+  const state = isMobile ? 'mobile=true' : 'web=true';
+  
+  console.log(`🔄 OAuth initiated - Mobile: ${isMobile}, State: ${state}, User-Agent: ${req.headers['user-agent']}`);
+  
+  passport.authenticate('google', { 
+    scope: ['profile', 'email'],
+    state: state
+  })(req, res, next);
 });
 
 router.get('/google/callback',
@@ -175,10 +185,14 @@ router.get('/google/callback',
     try {
       const user = req.user as any;
       
+      // Extract mobile flag from OAuth state parameter
+      const state = req.query.state as string;
+      const isMobile = state?.includes('mobile=true') || req.headers['user-agent']?.includes('nutritrack-mobile');
+      
+      console.log(`📱 OAuth callback - Mobile: ${isMobile}, State: ${state}, User-Agent: ${req.headers['user-agent']}`);
+      
       if (!user) {
-        // Check if this is a mobile request for error handling
-        const isMobile = req.query.mobile === 'true' || req.headers['user-agent']?.includes('nutritrack-mobile');
-        
+        console.log('❌ OAuth failed - no user returned');
         if (isMobile) {
           return res.redirect('nutritrack://auth/callback?error=oauth_failed');
         } else {
@@ -205,22 +219,22 @@ router.get('/google/callback',
         }
       });
 
-      // Check if this is a mobile request
-      const isMobile = req.query.mobile === 'true' || req.headers['user-agent']?.includes('nutritrack-mobile');
-      
       if (isMobile) {
         // Redirect to mobile app with custom URL scheme
+        console.log(`✅ Redirecting mobile user to: nutritrack://auth/callback?token=${token.substring(0, 20)}...`);
         res.redirect(`nutritrack://auth/callback?token=${token}`);
       } else {
         // Redirect to web frontend
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        console.log(`✅ Redirecting web user to: ${frontendUrl}/auth/callback`);
         res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
       }
     } catch (error) {
       console.error('Google OAuth callback error:', error);
       
-      // Check if this is a mobile request for error handling
-      const isMobile = req.query.mobile === 'true' || req.headers['user-agent']?.includes('nutritrack-mobile');
+      // Extract mobile flag from OAuth state parameter for error handling
+      const state = req.query.state as string;
+      const isMobile = state?.includes('mobile=true') || req.headers['user-agent']?.includes('nutritrack-mobile');
       
       if (isMobile) {
         res.redirect('nutritrack://auth/callback?error=oauth_failed');
